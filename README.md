@@ -1,2 +1,2 @@
-# DX11 Base Project
- Base project that all DX11 projects will fork off of.
+# AdvancedDX11Starter
+Starter code for an advanced DX11 project
