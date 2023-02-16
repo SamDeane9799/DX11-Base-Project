@@ -138,13 +138,18 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		vs->SetMatrix4x4("prevWorld", ge->GetTransform()->GetPreviousWorldMatrix());
 		vs->CopyAllBufferData();
 		std::shared_ptr<SimplePixelShader> ps = ge->GetMaterial()->GetPixelShader();
+		//Can remove the lights here
 		ps->SetData("lights", (void*)(&lights[0]), sizeof(Light) * (int)lights.size());
 		ps->SetInt("lightCount", lights.size());
+
+		//Move to Light rendering
 		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
 		ps->SetInt("specIBLTotalMipLevels", sky->GetNumOfMipLevels());
 		ps->SetShaderResourceView("BrdfLookUpMap", sky->GetBrdfLookUp());
 		ps->SetShaderResourceView("IrradianceIBLMap", sky->GetIrradianceMap());
 		ps->SetShaderResourceView("SpecularIBLMap", sky->getConvolvedSpecularMap());
+
+
 		ps->SetFloat2("screenSize", XMFLOAT2(windowWidth, windowHeight));
 		ps->SetFloat("MotionBlurMax", motionBlurMax);
 		ps->CopyBufferData("perFrame");
@@ -156,17 +161,10 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	// Draw the light sources
 	DrawPointLights(camera);
 
+	//Do light rendering
+
 	// Draw the sky
 	sky->Draw(camera);
-
-
-
-	/*Assets::GetInstance().GetPixelShader("FullscreenPS")->SetShader();
-	Assets::GetInstance().GetPixelShader("FullscreenPS")->SetSamplerState("basicSampler", ppSampler.Get());
-	Assets::GetInstance().GetPixelShader("FullscreenPS")->SetShaderResourceView("albedo", renderTargetsSRV[ALBEDO].Get());
-	Assets::GetInstance().GetPixelShader("FullscreenPS")->CopyAllBufferData();
-
-	context->Draw(3, 0);*/
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -353,8 +351,9 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 
 	if (ImGui::CollapsingHeader("SRV's")) {
 		ImGui::Image((void*)sky->GetBrdfLookUp().Get(), ImVec2(256, 256));
-		for (int i = 0; i < RENDER_TARGETS_COUNT; i++)
+		for (int i = 0; i < RENDER_TARGETS_COUNT; i++) {
 			ImGui::Image((void*)renderTargetsSRV[i].Get(), ImVec2(256, 256));
+		}
 	}
 
 	if (ImGui::CollapsingHeader("Motion Blur"))

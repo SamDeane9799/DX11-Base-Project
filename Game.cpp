@@ -94,7 +94,7 @@ void Game::Init()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set up lights initially
-	lightCount = 0;
+	lightCount = 128;
 	GenerateLights();
 
 	// Make our camera
@@ -398,6 +398,7 @@ void Game::GenerateLights()
 	lights.push_back(dir3);
 
 	// Create the rest of the lights
+	//Create new lights for deferred rendering
 	while (lights.size() < lightCount)
 	{
 		Light point = {};

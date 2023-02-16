@@ -38,6 +38,9 @@ struct PS_Output
 	float4 normals	: SV_TARGET1;
 	float4 depths	: SV_TARGET2;
 	float2 velocity	: SV_TARGET3;
+	float metalness	: SV_TARGET4;
+	float roughness : SV_TARGET5;
+	float3 worldpos	: SV_TARGET6;
 };
 
 
@@ -90,6 +93,14 @@ PS_Output main(VertexToPixel input)
 	// Gamma correct the texture back to linear space and apply the color tint
 	float4 surfaceColor = Albedo.Sample(BasicSampler, input.uv);
 	surfaceColor.rgb = pow(surfaceColor.rgb, 2.2) * colorTint;
+
+
+	//MOVE BELOW TO LIGHT RENDERER
+
+
+
+
+
 
 	// Specular color - Assuming albedo texture is actually holding specular color if metal == 1
 	// Note the use of lerp here - metal is generally 0 or 1, but might be in between
@@ -148,6 +159,22 @@ PS_Output main(VertexToPixel input)
 	float3 balancedDiff = DiffuseEnergyConserve(indirectDiffuse, indirectSpecular, metal);
 
 	float3 fullIndirect = indirectSpecular + balancedDiff * surfaceColor.rgb;
+	// Add the indirect to the direct
+	totalColor += fullIndirect;
+
+
+
+
+	//MOVE ABOVE TO LIGHT RENDERER
+
+
+
+
+
+
+
+
+
 
 
 	float2 prevPos = input.prevScreenPos.xy / input.prevScreenPos.w;
@@ -161,15 +188,12 @@ PS_Output main(VertexToPixel input)
 		velocity = normalize(velocity) * MotionBlurMax;
 	}
 
-	// Add the indirect to the direct
-
-	totalColor += fullIndirect;
-
-
-	// Gamma correction
-	output.color = float4(pow(totalColor, 1.0f / 2.2f), 1);
+	output.color = surfaceColor;
 	output.velocity = velocity.xy;
 	output.normals = float4(input.normal, 1);
 	output.depths = float4(input.screenPosition.z, 0, 0, 1);
+	output.roughness = roughness;
+	output.metalness = metal;
+	output.worldpos = input.worldPos;
 	return output;
 }
