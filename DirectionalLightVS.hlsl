@@ -6,42 +6,6 @@ struct VertexToPixel
 	float2 uv				: TEXCOORD;
 };
 
-
-
-// This vertex shader receives one piece of input: an id (ideally from 0 - 2, inclusive)
-
-//
-
-// From those values (0, 1 or 2), it creates uv coords and a screen position.
-
-// If done correctly, the triangle that arises from those three vertices will
-
-// perfectly fill the screen, like so:
-
-// ________________
-
-// |- - - - - - - - |- - - - - - - - uv = (2, 0)
-
-// |- uv = (0,0) | -
-
-// |- | -
-
-// |- | -
-
-// |- | -
-
-// |________________|
-
-// - -
-
-// - -
-
-// - -
-
-// -
-
-// uv = (0, 2)
-
 VertexToPixel main(uint id : SV_VertexID)
 
 {
@@ -67,6 +31,8 @@ VertexToPixel main(uint id : SV_VertexID)
 	output.screenPosition.x = output.screenPosition.x * 2 - 1;
 
 	output.screenPosition.y = output.screenPosition.y * -2 + 1;
+
+	output.screenPosition.z = 1;
 
 
 	return output;

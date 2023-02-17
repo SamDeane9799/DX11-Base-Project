@@ -8,9 +8,10 @@
 
 using namespace std;
 using namespace DirectX;
+
 Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context, Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> BackBufferRTV,
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DepthBufferDSV, unsigned int WindowWidth, unsigned int WindowHeight, std::shared_ptr<Sky> SkyPTR, std::vector<std::shared_ptr<GameEntity>>& Entities, std::vector<std::shared_ptr<Emitter>>& Emitters,
-	std::vector<Light>& Lights, HWND hWnd)
+	std::vector<std::shared_ptr<Light>>& Lights, Microsoft::WRL::ComPtr<ID3D11SamplerState> ClampSampler, HWND hWnd)
 	:
 		lights(Lights),
 		entities(Entities),
@@ -24,6 +25,7 @@ Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::
 	windowWidth = WindowWidth;
 	windowHeight = WindowHeight;
 	sky = SkyPTR;
+	clampSampler = ClampSampler;
 	
 	motionBlurNeighborhoodSamples = 16;
 	motionBlurMax = 16;
@@ -115,12 +117,12 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 
 
 	ID3D11RenderTargetView* renderTargets[RENDER_TARGETS_COUNT] = {};
-	for (int i = 0; i < RENDER_TARGETS_COUNT; i++)
+	for (int i = 0; i < RENDER_TARGETS_COUNT - 1; i++)
 	{
 		renderTargets[i] = renderTargetsRTV[i].Get();
 	}
 
-	context->OMSetRenderTargets(RENDER_TARGETS_COUNT, renderTargets, depthBufferDSV.Get());
+	context->OMSetRenderTargets(RENDER_TARGETS_COUNT - 1, renderTargets, depthBufferDSV.Get());
 
 	// Draw all of the entities
 	for (auto& ge : entities)
@@ -137,19 +139,8 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		vs->SetMatrix4x4("prevView", prevView);
 		vs->SetMatrix4x4("prevWorld", ge->GetTransform()->GetPreviousWorldMatrix());
 		vs->CopyAllBufferData();
+
 		std::shared_ptr<SimplePixelShader> ps = ge->GetMaterial()->GetPixelShader();
-		//Can remove the lights here
-		ps->SetData("lights", (void*)(&lights[0]), sizeof(Light) * (int)lights.size());
-		ps->SetInt("lightCount", lights.size());
-
-		//Move to Light rendering
-		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
-		ps->SetInt("specIBLTotalMipLevels", sky->GetNumOfMipLevels());
-		ps->SetShaderResourceView("BrdfLookUpMap", sky->GetBrdfLookUp());
-		ps->SetShaderResourceView("IrradianceIBLMap", sky->GetIrradianceMap());
-		ps->SetShaderResourceView("SpecularIBLMap", sky->getConvolvedSpecularMap());
-
-
 		ps->SetFloat2("screenSize", XMFLOAT2(windowWidth, windowHeight));
 		ps->SetFloat("MotionBlurMax", motionBlurMax);
 		ps->CopyBufferData("perFrame");
@@ -159,10 +150,35 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	}
 
 	// Draw the light sources
-	DrawPointLights(camera);
+	//DrawPointLights(camera);
 
 	//Do light rendering
+	context->OMSetRenderTargets(1, renderTargetsRTV[LIGHT_OUTPUT].GetAddressOf(), 0);
+	for (auto& l : lights)
+	{
+		std::shared_ptr<SimplePixelShader> ps = l->GetPixelShader();
+		ps->SetShader();
+		//Set Per frame info (should be moved before the for loop)
+		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
+		ps->SetInt("specIBLTotalMipLevels", sky->GetNumOfMipLevels());
+		ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
+		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
 
+		//Set Clamp sampler
+		ps->SetSamplerState("ClampSampler", clampSampler);
+		//Setting all our lighting information
+		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[ALBEDO].Get());
+		ps->SetShaderResourceView("Normals", renderTargetsSRV[NORMALS].Get());
+		ps->SetShaderResourceView("Depths", renderTargetsSRV[DEPTHS].Get());
+		ps->SetShaderResourceView("RoughMetal", renderTargetsSRV[ROUGHMETAL].Get());
+		ps->SetShaderResourceView("BrdfLookUpMap", sky->GetBrdfLookUp());
+		ps->SetShaderResourceView("IrradianceIBLMap", sky->GetIrradianceMap());
+		ps->SetShaderResourceView("SpecularIBLMap", sky->getConvolvedSpecularMap());
+
+		l->RenderLight(context, camera);
+	}
+
+	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthBufferDSV.Get());
 	// Draw the sky
 	sky->Draw(camera);
 
@@ -192,7 +208,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		std::shared_ptr<SimplePixelShader> ps = Assets::GetInstance().GetPixelShader("MotionBlurPS");
 		ps->SetShader();
 		ps->SetInt("numOfSamples", 16);
-		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[ALBEDO].Get());
+		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[LIGHT_OUTPUT].Get());
 		ps->SetShaderResourceView("Velocities", renderTargetsSRV[NEIGHBORHOOD_MAX].Get());
 		ps->SetSamplerState("ClampSampler", ppSampler);
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
@@ -210,7 +226,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 			continue;
 		std::shared_ptr<SimplePixelShader> ps = ge->GetMaterial()->GetPixelShader();
 		ps->SetShader();
-		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[ALBEDO].Get());
+		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[LIGHT_OUTPUT].Get());
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
 
 		// Draw the entity
@@ -270,8 +286,8 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 			std::string label = "Light " + std::to_string(i + 1);
 			if (ImGui::TreeNode(label.c_str()))
 			{
-				ImGui::ColorEdit3("Light Color", &lights[i].Color.x);
-				ImGui::DragFloat3("Light Direction", &lights[i].Direction.x);
+				ImGui::ColorEdit3("Light Color", &lights[i]->info.Color.x);
+				ImGui::DragFloat3("Light Direction", &lights[i]->info.Direction.x);
 				ImGui::TreePop();
 			}
 			ImGui::PopID();
@@ -417,35 +433,24 @@ void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
 
 	for (int i = 0; i < lights.size(); i++)
 	{
-		Light light = lights[i];
+		std::shared_ptr<Light> light = lights[i];
 
 		// Only drawing points, so skip others
-		if (light.Type != LIGHT_TYPE_POINT)
+		if (light->GetType() != LIGHT_TYPE_POINT)
 			continue;
 
 		// Calc quick scale based on range
-		float scale = light.Range / 20.0f;
-
-		// Make the transform for this light
-		XMMATRIX rotMat = XMMatrixIdentity();
-		XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
-		XMMATRIX transMat = XMMatrixTranslation(light.Position.x, light.Position.y, light.Position.z);
-		XMMATRIX worldMat = scaleMat * rotMat * transMat;
-
-		XMFLOAT4X4 world;
-		XMFLOAT4X4 worldInvTrans;
-		XMStoreFloat4x4(&world, worldMat);
-		XMStoreFloat4x4(&worldInvTrans, XMMatrixInverse(0, XMMatrixTranspose(worldMat)));
+		float scale = light->info.Range / 20.0f;
 
 		// Set up the world matrix for this light
-		lightVS->SetMatrix4x4("world", world);
-		lightVS->SetMatrix4x4("worldInverseTranspose", worldInvTrans);
+		lightVS->SetMatrix4x4("world", light->GetTransform()->GetWorldMatrix());
+		lightVS->SetMatrix4x4("worldInverseTranspose", light->GetTransform()->GetWorldInverseTransposeMatrix());
 
 		// Set up the pixel shader data
-		XMFLOAT3 finalColor = light.Color;
-		finalColor.x *= light.Intensity;
-		finalColor.y *= light.Intensity;
-		finalColor.z *= light.Intensity;
+		XMFLOAT3 finalColor = light->info.Color;
+		finalColor.x *= light->info.Intensity;
+		finalColor.y *= light->info.Intensity;
+		finalColor.z *= light->info.Intensity;
 		lightPS->SetFloat3("Color", finalColor);
 
 		// Copy data

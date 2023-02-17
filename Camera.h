@@ -18,13 +18,16 @@ public:
 	// Getters
 	DirectX::XMFLOAT4X4 GetView() { return viewMatrix; }
 	DirectX::XMFLOAT4X4 GetProjection() { return projMatrix; }
+	DirectX::XMFLOAT4X4 GetInvViewProj() { return invViewProj; }
 
 	Transform* GetTransform();
 
 private:
+	void UpdateInverseViewProjection();
 	// Camera matrices
 	DirectX::XMFLOAT4X4 viewMatrix;
 	DirectX::XMFLOAT4X4 projMatrix;
+	DirectX::XMFLOAT4X4 invViewProj;
 
 	Transform transform;
 

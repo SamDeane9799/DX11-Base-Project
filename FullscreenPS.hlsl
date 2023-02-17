@@ -2,10 +2,13 @@
 struct VertexToPixel
 
 {
-
-	float4 position : SV_POSITION;
-
-	float2 uv : TEXCOORD0;
+	float4 screenPosition	: SV_POSITION;
+	float2 uv				: TEXCOORD;
+	float3 normal			: NORMAL;
+	float3 tangent			: TANGENT;
+	float3 worldPos			: POSITION; // The world position of this vertex
+	float4 prevScreenPos	: SCREEN_POS0;// The world position of this vertex last frame
+	float4 currentScreenPos	: SCREEN_POS1;
 };
 
 

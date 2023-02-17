@@ -72,25 +72,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// Total color for this pixel
 	float3 totalColor = float3(0,0,0);
 
-	// Loop through all lights this frame
-	for(int i = 0; i < lightCount; i++)
-	{
-		// Which kind of light?
-		switch (lights[i].Type)
-		{
-		case LIGHT_TYPE_DIRECTIONAL:
-			totalColor += DirLight(lights[i], input.normal, input.worldPos, cameraPosition, specPower, surfaceColor.rgb);
-			break;
-
-		case LIGHT_TYPE_POINT:
-			totalColor += PointLight(lights[i], input.normal, input.worldPos, cameraPosition, specPower, surfaceColor.rgb);
-			break;
-
-		case LIGHT_TYPE_SPOT:
-			totalColor += SpotLight(lights[i], input.normal, input.worldPos, cameraPosition, specPower, surfaceColor.rgb);
-			break;
-		}
-	}
 
 	// Gamma correction
 	return float4(pow(totalColor, 1.0f / 2.2f), 1);

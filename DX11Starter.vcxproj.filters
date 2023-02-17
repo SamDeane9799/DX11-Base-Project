@@ -116,9 +116,6 @@
     <ClInclude Include="Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lights.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Sky.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -217,7 +214,16 @@
     <FxCompile Include="MotionBlurNeighborhoodPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="LightRender.hlsl">
+    <FxCompile Include="PointLightVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PointLightPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DirectionalLightVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DirectionalLightPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

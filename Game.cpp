@@ -103,7 +103,7 @@ void Game::Init()
 		3.0f,		// Move speed
 		1.0f,		// Mouse look
 		this->width / (float)this->height); // Aspect ratio
-	DXRenderer = std::make_unique<Renderer>(device, context, swapChain, backBufferRTV, depthStencilView, width, height, sky, entities, emitter, lights, hWnd);
+	DXRenderer = std::make_unique<Renderer>(device, context, swapChain, backBufferRTV, depthStencilView, width, height, sky, entities, emitter, lights, clampSamplerOptions, hWnd);
 }
 
 
@@ -374,39 +374,25 @@ void Game::GenerateLights()
 	lights.clear();
 
 	// Setup directional lights
-	Light dir1 = {};
-	dir1.Type = LIGHT_TYPE_DIRECTIONAL;
-	dir1.Direction = XMFLOAT3(1, -1, 1);
-	dir1.Color = XMFLOAT3(0.8f, 0.8f, 0.8f);
-	dir1.Intensity = 1.0f;
+	LightInfo dirInfo = {};
+	dirInfo.Direction = XMFLOAT3(1, -1, 1);
+	dirInfo.Color = XMFLOAT3(0.8f, 0.8f, 0.8f);
+	dirInfo.Intensity = 1.0f;
+	std::shared_ptr<Light> dir1 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo);
+	
 
-	Light dir2 = {};
-	dir2.Type = LIGHT_TYPE_DIRECTIONAL;
-	dir2.Direction = XMFLOAT3(-1, -0.25f, 0);
-	dir2.Color = XMFLOAT3(0.2f, 0.2f, 0.2f);
-	dir2.Intensity = 1.0f;
-
-	Light dir3 = {};
-	dir3.Type = LIGHT_TYPE_DIRECTIONAL;
-	dir3.Direction = XMFLOAT3(0, -1, 1);
-	dir3.Color = XMFLOAT3(0.2f, 0.2f, 0.2f);
-	dir3.Intensity = 1.0f;
-
-	// Add light to the list
 	lights.push_back(dir1);
-	lights.push_back(dir2);
-	lights.push_back(dir3);
 
 	// Create the rest of the lights
 	//Create new lights for deferred rendering
 	while (lights.size() < lightCount)
 	{
-		Light point = {};
-		point.Type = LIGHT_TYPE_POINT;
-		point.Position = XMFLOAT3(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f));
-		point.Color = XMFLOAT3(RandomRange(0, 1), RandomRange(0, 1), RandomRange(0, 1));
-		point.Range = RandomRange(5.0f, 10.0f);
-		point.Intensity = RandomRange(0.1f, 3.0f);
+		LightInfo info = {};
+		info.Color = XMFLOAT3(RandomRange(0, 1), RandomRange(0, 1), RandomRange(0, 1));
+		info.Intensity = RandomRange(0.1f, 3.0f);
+		std::shared_ptr<Light> point = std::make_shared<Light>(LIGHT_TYPE_POINT, info);
+		point->GetTransform()->SetPosition(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f));
+		point->SetRange(RandomRange(5.0f, 10.0f));
 
 		// Add to the list
 		lights.push_back(point);

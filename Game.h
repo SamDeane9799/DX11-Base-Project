@@ -7,7 +7,7 @@
 #include "SimpleShader.h"
 #include "SpriteFont.h"
 #include "SpriteBatch.h"
-#include "Lights.h"
+#include "Light.h"
 #include "Sky.h"
 #include "Renderer.h"
 #include "Emitter.h"
@@ -42,7 +42,7 @@ private:
 	int entityDirection = 1;
 
 	// Lights
-	std::vector<Light> lights;
+	std::vector<std::shared_ptr<Light>> lights;
 	int lightCount;
 
 	std::unique_ptr<Renderer> DXRenderer;

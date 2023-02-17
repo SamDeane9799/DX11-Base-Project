@@ -1,6 +1,8 @@
 
 #pragma once
 #include <d3d11.h>
+#include <wrl/client.h>
+#include <memory>
 #include "Mesh.h"
 #include "Material.h"
 #include "GameEntity.h"
@@ -8,22 +10,19 @@
 #include "SimpleShader.h"
 #include "SpriteFont.h"
 #include "SpriteBatch.h"
-#include "Lights.h"
+#include "Light.h"
 #include "Emitter.h"
 #include "Sky.h"
-#include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
-#include <memory>
 
 enum RenderTargetType
 { 
 	ALBEDO,
 	NORMALS,
+	ROUGHMETAL,
 	DEPTHS,
 	VELOCITY,
-	ROUGHNESS,
-	METALNESS,
-	WORLDPOS,
 	NEIGHBORHOOD_MAX,
+	LIGHT_OUTPUT,
 	RENDER_TARGETS_COUNT
 };
 
@@ -32,7 +31,7 @@ class Renderer
 public:
 	Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::ComPtr<ID3D11DeviceContext> Context, Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain, Microsoft::WRL::ComPtr<ID3D11RenderTargetView> BackBufferRTV,
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DepthBufferDSV, unsigned int WindowWidth, unsigned int WindowHeight, std::shared_ptr<Sky> SkyPTR, std::vector<std::shared_ptr<GameEntity>>& Entities, std::vector<std::shared_ptr<Emitter>>& Emitters,
-		std::vector<Light>& Lights, HWND hWnd);
+		std::vector<std::shared_ptr<Light>>& Lights, Microsoft::WRL::ComPtr<ID3D11SamplerState> ClampSampler, HWND hWnd);
 	~Renderer();
 	void PreResize();
 
@@ -64,12 +63,13 @@ private:
 	std::shared_ptr<Sky> sky;
 	std::vector<std::shared_ptr<GameEntity>>& entities;
 	std::vector<std::shared_ptr<Emitter>>& emitters;
-	std::vector<Light>& lights;
+	std::vector<std::shared_ptr<Light>>& lights;
 
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>* renderTargetsRTV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>* renderTargetsSRV;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> clampSampler;
 
 	DirectX::XMFLOAT4X4 prevView;
 	DirectX::XMFLOAT4X4 prevProj;

@@ -68,6 +68,7 @@ void Camera::UpdateViewMatrix()
 		XMVectorSet(0, 1, 0, 0));
 
 	XMStoreFloat4x4(&viewMatrix, view);
+	UpdateInverseViewProjection();
 }
 
 // Updates the projection matrix
@@ -79,6 +80,14 @@ void Camera::UpdateProjectionMatrix(float aspectRatio)
 		0.01f,				// Near clip plane distance
 		100.0f);			// Far clip plane distance
 	XMStoreFloat4x4(&projMatrix, P);
+	UpdateInverseViewProjection();
+}
+
+void Camera::UpdateInverseViewProjection()
+{
+	XMMATRIX v = XMLoadFloat4x4(&viewMatrix);
+	XMMATRIX p = XMLoadFloat4x4(&projMatrix);
+	XMStoreFloat4x4(&invViewProj, XMMatrixInverse(0, XMMatrixMultiply(v, p)));
 }
 
 Transform* Camera::GetTransform()

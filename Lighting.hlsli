@@ -8,7 +8,7 @@
 
 struct Light
 {
-	int		Type;
+	float	SpotFalloff;
 	float3	Direction;	// 16 bytes
 
 	float	Range;
@@ -16,9 +16,6 @@ struct Light
 
 	float	Intensity;
 	float3	Color;		// 48 bytes
-
-	float	SpotFalloff;
-	float3	Padding;	// 64 bytes
 };
 
 // === UTILITY FUNCTIONS ============================================
@@ -575,6 +572,18 @@ float3 ImportanceSampleGGX(float2 Xi, float roughness, float3 N)
 
 }
 
+//Got from https://github.com/vixorien/ggp-advanced-demos/blob/main/Deferred%20Rendering/Lighting.hlsli
+float3 WorldSpaceFromDepth(float depth, float2 uv, matrix invViewProj)
+{
+	// Back to NDCs
+	uv = uv * 2.0f - 1.0f;
+	uv.y *= -1.0f; // Flip y due to UV <--> NDC 
+	float4 screenPos = float4(uv, depth, 1.0f);
+
+	// Back to world space
+	float4 worldPos = mul(invViewProj, screenPos);
+	return worldPos.xyz / worldPos.w;
+}
 
 // ----------------------------------------------------
 // !!! VERY IMPORTANT if not using the starter code !!!

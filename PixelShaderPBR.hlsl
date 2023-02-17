@@ -36,11 +36,9 @@ struct PS_Output
 {
 	float4 color	: SV_TARGET0;
 	float4 normals	: SV_TARGET1;
-	float4 depths	: SV_TARGET2;
-	float2 velocity	: SV_TARGET3;
-	float metalness	: SV_TARGET4;
-	float roughness : SV_TARGET5;
-	float3 worldpos	: SV_TARGET6;
+	float roughmetal : SV_TARGET2;
+	float4 depths	: SV_TARGET3;
+	float2 velocity	: SV_TARGET4;
 };
 
 
@@ -94,89 +92,6 @@ PS_Output main(VertexToPixel input)
 	float4 surfaceColor = Albedo.Sample(BasicSampler, input.uv);
 	surfaceColor.rgb = pow(surfaceColor.rgb, 2.2) * colorTint;
 
-
-	//MOVE BELOW TO LIGHT RENDERER
-
-
-
-
-
-
-	// Specular color - Assuming albedo texture is actually holding specular color if metal == 1
-	// Note the use of lerp here - metal is generally 0 or 1, but might be in between
-	// because of linear texture sampling, so we want lerp the specular color to match
-	float3 specColor = lerp(F0_NON_METAL.rrr, surfaceColor.rgb, metal);
-
-	// Total color for this pixel
-	float3 totalColor = float3(0,0,0);
-
-	// Loop through all lights this frame
-	for(int i = 0; i < lightCount; i++)
-	{
-		// Which kind of light?
-		switch (lights[i].Type)
-		{
-		case LIGHT_TYPE_DIRECTIONAL:
-			totalColor += DirLightPBR(lights[i], input.normal, input.worldPos, cameraPosition, roughness, metal, surfaceColor.rgb, specColor);
-			break;
-
-		case LIGHT_TYPE_POINT:
-			totalColor += PointLightPBR(lights[i], input.normal, input.worldPos, cameraPosition, roughness, metal, surfaceColor.rgb, specColor);
-			break;
-
-		case LIGHT_TYPE_SPOT:
-			totalColor += SpotLightPBR(lights[i], input.normal, input.worldPos, cameraPosition, roughness, metal, surfaceColor.rgb, specColor);
-			break;
-		}
-	}
-
-	// Calculate requisite reflection vectors
-
-	float3 viewToCam = normalize(cameraPosition - input.worldPos);
-
-	float3 viewRefl = normalize(reflect(-viewToCam, input.normal));
-
-	float NdotV = saturate(dot(input.normal, viewToCam));
-
-
-	// Indirect lighting
-
-	float3 indirectDiffuse = IndirectDiffuse(IrradianceIBLMap, BasicSampler, input.normal);
-
-	float3 indirectSpecular = IndirectSpecular(
-
-		SpecularIBLMap, specIBLTotalMipLevels,
-
-		BrdfLookUpMap, ClampSampler, // MUST use the clamp sampler here!
-
-		viewRefl, NdotV,
-
-		roughness, specColor);
-
-
-	// Balance indirect diff/spec
-
-	float3 balancedDiff = DiffuseEnergyConserve(indirectDiffuse, indirectSpecular, metal);
-
-	float3 fullIndirect = indirectSpecular + balancedDiff * surfaceColor.rgb;
-	// Add the indirect to the direct
-	totalColor += fullIndirect;
-
-
-
-
-	//MOVE ABOVE TO LIGHT RENDERER
-
-
-
-
-
-
-
-
-
-
-
 	float2 prevPos = input.prevScreenPos.xy / input.prevScreenPos.w;
 	float2 currentPos = input.currentScreenPos.xy / input.currentScreenPos.w;
 	float2 velocity = currentPos - prevPos;
@@ -192,8 +107,6 @@ PS_Output main(VertexToPixel input)
 	output.velocity = velocity.xy;
 	output.normals = float4(input.normal, 1);
 	output.depths = float4(input.screenPosition.z, 0, 0, 1);
-	output.roughness = roughness;
-	output.metalness = metal;
-	output.worldpos = input.worldPos;
+	output.roughmetal = float4(roughness, metal, 0, 0);
 	return output;
 }
