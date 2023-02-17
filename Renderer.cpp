@@ -66,6 +66,38 @@ Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::
 	additiveBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
 	additiveBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
 	device->CreateBlendState(&additiveBlendDesc, particleBS.GetAddressOf());
+
+	D3D11_BLEND_DESC deferredBlendDesc = {};
+	deferredBlendDesc.AlphaToCoverageEnable = false;
+	deferredBlendDesc.IndependentBlendEnable = false;
+	deferredBlendDesc.RenderTarget[0].BlendEnable = true;
+	deferredBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	deferredBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	deferredBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	deferredBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	deferredBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	deferredBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	deferredBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	device->CreateBlendState(&deferredBlendDesc, deferredBS.GetAddressOf());
+
+
+	D3D11_RASTERIZER_DESC rDesc = {};
+	rDesc.DepthClipEnable = true;
+	rDesc.CullMode = D3D11_CULL_FRONT;
+	rDesc.FillMode = D3D11_FILL_SOLID;
+	device->CreateRasterizerState(&rDesc, pointLightRS.GetAddressOf());
+
+	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+
+	dsDesc.DepthEnable = true;
+	dsDesc.DepthFunc = D3D11_COMPARISON_GREATER;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	device->CreateDepthStencilState(&dsDesc, directionalLightDSS.GetAddressOf());
+
+	dsDesc.DepthEnable = true;
+	dsDesc.DepthFunc = D3D11_COMPARISON_GREATER;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	device->CreateDepthStencilState(&dsDesc, pointLightDSS.GetAddressOf());
 }
 
 Renderer::~Renderer()
@@ -154,8 +186,17 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 
 	//Do light rendering
 	context->OMSetRenderTargets(1, renderTargetsRTV[LIGHT_OUTPUT].GetAddressOf(), 0);
+	context->OMSetBlendState(deferredBS.Get(), 0, 0xFFFFFFFF);
 	for (auto& l : lights)
 	{
+		if (l->GetType() == LIGHT_TYPE_DIRECTIONAL) {
+			context->OMSetDepthStencilState(directionalLightDSS.Get(), 0);
+			context->RSSetState(0);
+		}
+		else if (l->GetType() == LIGHT_TYPE_POINT) {
+			context->OMSetDepthStencilState(pointLightDSS.Get(), 0);
+			context->RSSetState(pointLightRS.Get());
+		}
 		std::shared_ptr<SimplePixelShader> ps = l->GetPixelShader();
 		ps->SetShader();
 		//Set Per frame info (should be moved before the for loop)
@@ -440,7 +481,7 @@ void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
 			continue;
 
 		// Calc quick scale based on range
-		float scale = light->info.Range / 20.0f;
+		float scale = light->info.Range / 50.0f;
 
 		// Set up the world matrix for this light
 		lightVS->SetMatrix4x4("world", light->GetTransform()->GetWorldMatrix());

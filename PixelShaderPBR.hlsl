@@ -105,7 +105,7 @@ PS_Output main(VertexToPixel input)
 
 	output.color = surfaceColor;
 	output.velocity = velocity.xy;
-	output.normals = float4(input.normal, 1);
+	output.normals = float4(input.normal * .5f + 0.5f, 1);
 	output.depths = float4(input.screenPosition.z, 0, 0, 1);
 	output.roughmetal = float4(roughness, metal, 0, 0);
 	return output;

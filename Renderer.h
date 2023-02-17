@@ -53,7 +53,11 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> backBufferRTV;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthBufferDSV;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> particleDSS;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> directionalLightDSS;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> pointLightDSS;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> pointLightRS;
 	Microsoft::WRL::ComPtr<ID3D11BlendState> particleBS;
+	Microsoft::WRL::ComPtr<ID3D11BlendState> deferredBS;
 	std::shared_ptr<DirectX::SpriteFont> arial;
 	std::shared_ptr<DirectX::SpriteBatch> spriteBatch;
 	unsigned int windowWidth;
