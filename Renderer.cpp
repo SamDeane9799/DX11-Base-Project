@@ -201,7 +201,6 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		ps->SetShader();
 		//Set Per frame info (should be moved before the for loop)
 		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
-		ps->SetInt("specIBLTotalMipLevels", sky->GetNumOfMipLevels());
 		ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
 
@@ -212,16 +211,44 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		ps->SetShaderResourceView("Normals", renderTargetsSRV[NORMALS].Get());
 		ps->SetShaderResourceView("Depths", renderTargetsSRV[DEPTHS].Get());
 		ps->SetShaderResourceView("RoughMetal", renderTargetsSRV[ROUGHMETAL].Get());
+
+		l->RenderLight(context, camera);
+	}
+	context->OMSetDepthStencilState(0, 0);
+	context->RSSetState(0);
+	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
+
+
+	context->OMSetRenderTargets(1, renderTargetsRTV[SCENE].GetAddressOf(), 0);
+	Assets::GetInstance().GetVertexShader("FullscreenVS")->SetShader();
+	//Final Light Combine
+	{
+		std::shared_ptr<SimplePixelShader> ps = Assets::GetInstance().GetPixelShader("DeferredCombinePS");
+		ps->SetShader();
+
+		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
+		ps->SetInt("specIBLTotalMipLevels", sky->GetNumOfMipLevels());
+		ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
+
+		//Set Clamp sampler
+		ps->SetSamplerState("ClampSampler", clampSampler);
+		//Setting all our lighting information
+		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[ALBEDO].Get());
+		ps->SetShaderResourceView("Normals", renderTargetsSRV[NORMALS].Get());
+		ps->SetShaderResourceView("Depths", renderTargetsSRV[DEPTHS].Get());
+		ps->SetShaderResourceView("RoughMetal", renderTargetsSRV[ROUGHMETAL].Get());
+		ps->SetShaderResourceView("LightOutput", renderTargetsSRV[LIGHT_OUTPUT].Get());
 		ps->SetShaderResourceView("BrdfLookUpMap", sky->GetBrdfLookUp());
 		ps->SetShaderResourceView("IrradianceIBLMap", sky->GetIrradianceMap());
 		ps->SetShaderResourceView("SpecularIBLMap", sky->getConvolvedSpecularMap());
 
-		l->RenderLight(context, camera);
+		context->Draw(3, 0);
 	}
-
-	context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), depthBufferDSV.Get());
 	// Draw the sky
+	context->OMSetRenderTargets(1, renderTargetsRTV[SCENE].GetAddressOf(), depthBufferDSV.Get());
 	sky->Draw(camera);
+
+
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
@@ -230,8 +257,8 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
 	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
 
-	Assets::GetInstance().GetVertexShader("FullscreenVS")->SetShader();
 	context->OMSetRenderTargets(1, renderTargetsRTV[NEIGHBORHOOD_MAX].GetAddressOf(), 0);
+	Assets::GetInstance().GetVertexShader("FullscreenVS")->SetShader();
 	//Doing the motion blur B)
 	{
 		std::shared_ptr<SimplePixelShader> ps = Assets::GetInstance().GetPixelShader("MotionBlurNeighborhoodPS");
@@ -249,7 +276,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		std::shared_ptr<SimplePixelShader> ps = Assets::GetInstance().GetPixelShader("MotionBlurPS");
 		ps->SetShader();
 		ps->SetInt("numOfSamples", 16);
-		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[LIGHT_OUTPUT].Get());
+		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[SCENE].Get());
 		ps->SetShaderResourceView("Velocities", renderTargetsSRV[NEIGHBORHOOD_MAX].Get());
 		ps->SetSamplerState("ClampSampler", ppSampler);
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
@@ -267,7 +294,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 			continue;
 		std::shared_ptr<SimplePixelShader> ps = ge->GetMaterial()->GetPixelShader();
 		ps->SetShader();
-		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[LIGHT_OUTPUT].Get());
+		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[SCENE].Get());
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
 
 		// Draw the entity

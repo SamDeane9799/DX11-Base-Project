@@ -9,7 +9,6 @@ cbuffer perFrame : register(b1)
 {
 	float3 cameraPosition;
 	matrix invViewProj;
-	int specIBLTotalMipLevels;
 	float2 screenSize;
 }
 
@@ -23,10 +22,6 @@ Texture2D OriginalColors	: register(t0);
 Texture2D Normals			: register(t1);
 Texture2D RoughMetal		: register(t2);
 Texture2D Depths			: register(t3);
-//IBL
-//Texture2D BrdfLookUpMap		: register(t5);
-//TextureCube IrradianceIBLMap: register(t6);
-//TextureCube SpecularIBLMap	: register(t7);
 
 SamplerState BasicSampler	: register(s0);
 SamplerState ClampSampler	: register(s1);

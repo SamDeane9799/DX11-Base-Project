@@ -1,9 +1,13 @@
 // Defines the output data of our vertex shader
 
 struct VertexToPixel
+
 {
-	float4 screenPosition	: SV_POSITION;
-	float2 uv				: TEXCOORD;
+
+	float4 position : SV_POSITION;
+
+	float2 uv : TEXCOORD0;
+
 };
 
 
@@ -62,11 +66,11 @@ VertexToPixel main(uint id : SV_VertexID)
 
 	// Adjust the position based on the UV
 
-	output.screenPosition = float4(output.uv, 0, 1);
+	output.position = float4(output.uv, 0, 1);
 
-	output.screenPosition.x = output.screenPosition.x * 2 - 1;
+	output.position.x = output.position.x * 2 - 1;
 
-	output.screenPosition.y = output.screenPosition.y * -2 + 1;
+	output.position.y = output.position.y * -2 + 1;
 
 
 	return output;

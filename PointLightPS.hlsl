@@ -9,7 +9,6 @@ cbuffer perFrame : register(b1)
 {
 	float3 cameraPosition;
 	matrix invViewProj;
-	int specIBLTotalMipLevels;
 	float2 screenSize;
 }
 
