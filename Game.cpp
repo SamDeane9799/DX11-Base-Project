@@ -94,7 +94,7 @@ void Game::Init()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set up lights initially
-	lightCount = 128;
+	lightCount = 10;
 	GenerateLights();
 
 	// Make our camera
@@ -374,14 +374,14 @@ void Game::GenerateLights()
 	lights.clear();
 
 	// Setup directional lights
-	LightInfo dirInfo = {};
+	/*LightInfo dirInfo = {};
 	dirInfo.Direction = XMFLOAT3(1, -1, 1);
 	dirInfo.Color = XMFLOAT3(0.8f, 0.8f, 0.8f);
 	dirInfo.Intensity = 1.0f;
 	std::shared_ptr<Light> dir1 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo);
 	
 
-	lights.push_back(dir1);
+	lights.push_back(dir1);*/
 
 	// Create the rest of the lights
 	//Create new lights for deferred rendering
@@ -391,7 +391,7 @@ void Game::GenerateLights()
 		info.Color = XMFLOAT3(RandomRange(0, 1), RandomRange(0, 1), RandomRange(0, 1));
 		info.Intensity = RandomRange(0.1f, 3.0f);
 		std::shared_ptr<Light> point = std::make_shared<Light>(LIGHT_TYPE_POINT, info);
-		point->GetTransform()->SetPosition(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f));
+		point->SetPosition(XMFLOAT3(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f)));
 		point->SetRange(RandomRange(5.0f, 10.0f));
 
 		// Add to the list

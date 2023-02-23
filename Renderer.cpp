@@ -146,6 +146,8 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	{
 		context->ClearRenderTargetView(renderTargetsRTV[i].Get(), color);
 	}
+	/*const float clear[4] = {1, 0, 0, 0};
+	context->ClearRenderTargetView(renderTargetsRTV[DEPTHS].Get(), clear);*/
 
 
 	ID3D11RenderTargetView* renderTargets[RENDER_TARGETS_COUNT] = {};
@@ -155,17 +157,11 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	}
 
 	context->OMSetRenderTargets(RENDER_TARGETS_COUNT - 1, renderTargets, depthBufferDSV.Get());
-
 	// Draw all of the entities
 	for (auto& ge : entities)
 	{
 		if (ge->GetMaterial()->GetRefractive())
 			continue;
-		// Set the "per frame" data
-		// Note that this should literally be set once PER FRAME, before
-		// the draw loop, but we're currently setting it per entity since 
-		// we are just using whichever shader the current entity has.  
-		// Inefficient!!!
 		std::shared_ptr<SimpleVertexShader> vs = ge->GetMaterial()->GetVertexShader();
 		vs->SetMatrix4x4("prevProjection", prevProj);
 		vs->SetMatrix4x4("prevView", prevView);
@@ -187,8 +183,12 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	//Do light rendering
 	context->OMSetRenderTargets(1, renderTargetsRTV[LIGHT_OUTPUT].GetAddressOf(), 0);
 	context->OMSetBlendState(deferredBS.Get(), 0, 0xFFFFFFFF);
+	previousLightType = -1;
 	for (auto& l : lights)
 	{
+		std::shared_ptr<SimplePixelShader> ps = l->GetPixelShader();
+		ps->SetShader();
+
 		if (l->GetType() == LIGHT_TYPE_DIRECTIONAL) {
 			context->OMSetDepthStencilState(directionalLightDSS.Get(), 0);
 			context->RSSetState(0);
@@ -196,21 +196,20 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		else if (l->GetType() == LIGHT_TYPE_POINT) {
 			context->OMSetDepthStencilState(pointLightDSS.Get(), 0);
 			context->RSSetState(pointLightRS.Get());
+
+			ps->SetData("lightInfo", (void*)&l->info, sizeof(Light));
 		}
-		std::shared_ptr<SimplePixelShader> ps = l->GetPixelShader();
-		ps->SetShader();
 		//Set Per frame info (should be moved before the for loop)
 		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
-		ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
+		ps->SetMatrix4x4("invViewProj", l->GetTransform()->GetWorldInverseTransposeMatrix());
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
 
-		//Set Clamp sampler
-		ps->SetSamplerState("ClampSampler", clampSampler);
 		//Setting all our lighting information
 		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[ALBEDO].Get());
 		ps->SetShaderResourceView("Normals", renderTargetsSRV[NORMALS].Get());
 		ps->SetShaderResourceView("Depths", renderTargetsSRV[DEPTHS].Get());
 		ps->SetShaderResourceView("RoughMetal", renderTargetsSRV[ROUGHMETAL].Get());
+		ps->CopyAllBufferData();
 
 		l->RenderLight(context, camera);
 	}
@@ -508,11 +507,13 @@ void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
 			continue;
 
 		// Calc quick scale based on range
-		float scale = light->info.Range / 50.0f;
+		float scale = light->info.Range / 10.0f;
 
 		// Set up the world matrix for this light
-		lightVS->SetMatrix4x4("world", light->GetTransform()->GetWorldMatrix());
-		lightVS->SetMatrix4x4("worldInverseTranspose", light->GetTransform()->GetWorldInverseTransposeMatrix());
+		Transform* lightTransform = light->GetTransform();
+		lightTransform->SetScale(scale, scale, scale);
+		lightVS->SetMatrix4x4("world", lightTransform->GetWorldMatrix());
+		lightVS->SetMatrix4x4("worldInverseTranspose", lightTransform->GetWorldInverseTransposeMatrix());
 
 		// Set up the pixel shader data
 		XMFLOAT3 finalColor = light->info.Color;
@@ -527,5 +528,6 @@ void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
 
 		// Draw
 		lightMesh->SetBuffersAndDraw(context);
+		lightTransform = nullptr;
 	}
 }

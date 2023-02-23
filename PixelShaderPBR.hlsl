@@ -36,7 +36,7 @@ struct PS_Output
 {
 	float4 color	: SV_TARGET0;
 	float4 normals	: SV_TARGET1;
-	float roughmetal : SV_TARGET2;
+	float4 roughmetal : SV_TARGET2;
 	float4 depths	: SV_TARGET3;
 	float2 velocity	: SV_TARGET4;
 };
@@ -104,9 +104,9 @@ PS_Output main(VertexToPixel input)
 	}
 
 	output.color = surfaceColor;
-	output.velocity = velocity.xy;
 	output.normals = float4(input.normal * .5f + 0.5f, 1);
-	output.depths = float4(input.screenPosition.z, 0, 0, 1);
+	output.depths = input.screenPosition.w / 90.0f;
 	output.roughmetal = float4(roughness, metal, 0, 0);
+	output.velocity = velocity.xy;
 	return output;
 }

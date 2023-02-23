@@ -23,19 +23,19 @@ Texture2D Normals			: register(t1);
 Texture2D RoughMetal		: register(t2);
 Texture2D Depths			: register(t3);
 
-SamplerState BasicSampler	: register(s0);
 SamplerState ClampSampler	: register(s1);
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
 	float2 uv = input.screenPosition / screenSize;
+	float3 index = float3(input.screenPosition.xy, 0);
 	
-	float3 surfaceColor = OriginalColors.Sample(BasicSampler, uv).rgb;
-	float3 normal = normalize(Normals.Sample(BasicSampler, uv).rgb * 2 - 1);
-	float depth = Depths.Sample(BasicSampler, uv).r;
+	float3 surfaceColor = OriginalColors.Load(index).rgb;
+	float3 normal = normalize(Normals.Load(index).rgb * 2 - 1);
+	float depth = Depths.Load(index).r;
 	float3 pixelWorldPos = WorldSpaceFromDepth(depth, uv, invViewProj);
-	float roughness = RoughMetal.Sample(BasicSampler, uv).r;
-	float metal = RoughMetal.Sample(BasicSampler, uv).g;
+	float roughness = RoughMetal.Load(index).r;
+	float metal = RoughMetal.Load(index).g;
 
 	// Specular color - Assuming albedo texture is actually holding specular color if metal == 1
 	// Note the use of lerp here - metal is generally 0 or 1, but might be in between

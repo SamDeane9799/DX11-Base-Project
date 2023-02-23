@@ -65,6 +65,7 @@ private:
 	unsigned int windowHeight;
 	int motionBlurNeighborhoodSamples;
 	int motionBlurMax;
+	int previousLightType;
 	std::shared_ptr<Sky> sky;
 	std::vector<std::shared_ptr<GameEntity>>& entities;
 	std::vector<std::shared_ptr<Emitter>>& emitters;

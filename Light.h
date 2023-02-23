@@ -36,6 +36,8 @@ public:
 	inline int GetType() { return lightType; }
 	void SetRange(int range);
 	void SetDirection(DirectX::XMFLOAT3 direction);
+	void SetPosition(DirectX::XMFLOAT3 position);
+
 
 	void RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera);
 

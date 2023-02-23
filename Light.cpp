@@ -56,6 +56,19 @@ void Light::SetDirection(DirectX::XMFLOAT3 direction)
 	}
 }
 
+void Light::SetPosition(DirectX::XMFLOAT3 position)
+{
+	switch (lightType)
+	{
+	case LIGHT_TYPE_SPOT || LIGHT_TYPE_POINT:
+		transform.SetPosition(position.x, position.y, position.z);
+		info.Position = position;
+		break;
+	default:
+		break;
+	}
+}
+
 void Light::RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
 {
 	vs->SetShader();
