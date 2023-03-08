@@ -15,7 +15,6 @@ cbuffer perFrame : register(b1)
 struct VertexToPixel
 {
 	float4 screenPosition	: SV_POSITION;
-	float3 worldPos			: POSITION;
 };
 
 Texture2D OriginalColors	: register(t0);
@@ -23,17 +22,17 @@ Texture2D Normals			: register(t1);
 Texture2D RoughMetal		: register(t2);
 Texture2D Depths			: register(t3);
 
+SamplerState BasicSampler	: register(s0);
 SamplerState ClampSampler	: register(s1);
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	float2 uv = input.screenPosition / screenSize;
+	float2 uv = input.screenPosition.xy / screenSize;
 	float3 index = float3(input.screenPosition.xy, 0);
 	
 	float3 surfaceColor = OriginalColors.Load(index).rgb;
 	float3 normal = normalize(Normals.Load(index).rgb * 2 - 1);
 	float depth = Depths.Load(index).r;
-	float3 pixelWorldPos = WorldSpaceFromDepth(depth, uv, invViewProj);
 	float roughness = RoughMetal.Load(index).r;
 	float metal = RoughMetal.Load(index).g;
 
@@ -41,6 +40,9 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// Note the use of lerp here - metal is generally 0 or 1, but might be in between
 	// because of linear texture sampling, so we want lerp the specular color to match
 	float3 specColor = lerp(F0_NON_METAL.rrr, surfaceColor.rgb, metal);
+
+
+	float3 pixelWorldPos = WorldSpaceFromDepth(depth, uv, invViewProj);
 
 	// Total color for this pixel
 	float3 totalColor = float3(0,0,0);

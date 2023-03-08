@@ -23,7 +23,7 @@ struct VertexShaderInput
 // Out of the vertex shader (and eventually input to the PS)
 struct VertexToPixel
 {
-	float4 screenPosition	: SV_POSITION;
+	float4 position			: SV_POSITION;
 	float2 uv				: TEXCOORD;
 	float3 normal			: NORMAL;
 	float3 tangent			: TANGENT;
@@ -42,8 +42,8 @@ VertexToPixel main(VertexShaderInput input)
 
 	// Calculate output position
 	matrix worldViewProj = mul(projection, mul(view, world));
-	output.screenPosition = mul(worldViewProj, float4(input.position, 1.0f));
-	output.currentScreenPos = output.screenPosition;
+	output.position = mul(worldViewProj, float4(input.position, 1.0f));
+	output.currentScreenPos = output.position;
 
 	matrix prevWorldViewProj = mul(prevProjection, mul(prevView, prevWorld));
 	output.prevScreenPos = mul(prevWorldViewProj, float4(input.position, 1.0f));

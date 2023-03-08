@@ -78,12 +78,14 @@ void Light::RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std
 	if (lightType != LIGHT_TYPE_DIRECTIONAL)
 	{
 		vs->SetMatrix4x4("world", transform.GetWorldMatrix());
-		vs->SetMatrix4x4("worldInverseTranspose", transform.GetWorldInverseTransposeMatrix());
 		vs->SetMatrix4x4("view", camera->GetView());
 		vs->SetMatrix4x4("projection", camera->GetProjection());
 		vs->CopyAllBufferData();
+
+		ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
 	}
 
+	ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
 	ps->SetData("lightInfo", (void*)(&info), sizeof(LightInfo));
 	if (lightType == LIGHT_TYPE_SPOT) {
 		ps->SetFloat("SpotFalloff", info.SpotFalloff);

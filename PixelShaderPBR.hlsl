@@ -8,26 +8,11 @@ cbuffer perMaterial : register(b0)
 {
 	// Surface color
 	float3 colorTint;
-
-	// UV adjustments
-	float2 uvScale;
-	float2 uvOffset;
 };
 
 // Data that only changes once per frame
 cbuffer perFrame : register(b1)
 {
-	// An array of light data
-	Light lights[MAX_LIGHTS];
-
-	// The amount of lights THIS FRAME
-	int lightCount;
-
-	// Needed for specular (reflection) calculation
-	float3 cameraPosition;
-
-	int specIBLTotalMipLevels;
-
 	float2 screenSize;
 	float MotionBlurMax;
 };
@@ -37,7 +22,7 @@ struct PS_Output
 	float4 color	: SV_TARGET0;
 	float4 normals	: SV_TARGET1;
 	float4 roughmetal : SV_TARGET2;
-	float4 depths	: SV_TARGET3;
+	float depths	: SV_TARGET3;
 	float2 velocity	: SV_TARGET4;
 };
 
@@ -46,7 +31,7 @@ struct PS_Output
 // - Should match the output of our corresponding vertex shader
 struct VertexToPixel
 {
-	float4 screenPosition	: SV_POSITION;
+	float4 position			: SV_POSITION;
 	float2 uv				: TEXCOORD;
 	float3 normal			: NORMAL;
 	float3 tangent			: TANGENT;
@@ -81,7 +66,7 @@ PS_Output main(VertexToPixel input)
 	input.tangent = normalize(input.tangent);
 
 	// Apply the uv adjustments
-	input.uv = input.uv * uvScale + uvOffset;
+	input.uv = input.uv;
 
 	// Sample various textures
 	input.normal = NormalMapping(NormalMap, BasicSampler, input.uv, input.normal, input.tangent);
@@ -105,8 +90,8 @@ PS_Output main(VertexToPixel input)
 
 	output.color = surfaceColor;
 	output.normals = float4(input.normal * .5f + 0.5f, 1);
-	output.depths = input.screenPosition.w / 90.0f;
 	output.roughmetal = float4(roughness, metal, 0, 0);
+	output.depths = input.position.z;
 	output.velocity = velocity.xy;
 	return output;
 }

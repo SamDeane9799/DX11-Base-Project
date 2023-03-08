@@ -46,7 +46,9 @@ private:
 
 	void DrawUI(std::vector<std::shared_ptr<Material>> materials, float deltaTime);
 
-	void CreatePostProcessResources();
+	void CreatePostProcessResources(int width, int height);
+
+	void CreateRTV(int width, int height, Microsoft::WRL::ComPtr<ID3D11RenderTargetView>& rtv, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>& srv, DXGI_FORMAT format);
 
 	Microsoft::WRL::ComPtr<ID3D11Device> device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;

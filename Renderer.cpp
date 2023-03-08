@@ -40,7 +40,7 @@ Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::
 	renderTargetsRTV = new Microsoft::WRL::ComPtr<ID3D11RenderTargetView>[RENDER_TARGETS_COUNT];
 	renderTargetsSRV = new Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>[RENDER_TARGETS_COUNT];
 
-	CreatePostProcessResources();
+	CreatePostProcessResources(WindowWidth, WindowHeight);
 
 	D3D11_SAMPLER_DESC ppSampleDesc = {};
 	ppSampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -123,7 +123,7 @@ void Renderer::PostResize(unsigned int windowWidth, unsigned int windowHeight, M
 		renderTargetsSRV[i].Reset();
 	}
 
-	CreatePostProcessResources();
+	CreatePostProcessResources(windowWidth, windowHeight);
 }
 
 
@@ -146,8 +146,11 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	{
 		context->ClearRenderTargetView(renderTargetsRTV[i].Get(), color);
 	}
-	/*const float clear[4] = {1, 0, 0, 0};
-	context->ClearRenderTargetView(renderTargetsRTV[DEPTHS].Get(), clear);*/
+
+	const float white[4] = { 1, 1, 1, 1 };
+
+	context->ClearRenderTargetView(renderTargetsRTV[DEPTHS].Get(), white);
+
 
 
 	ID3D11RenderTargetView* renderTargets[RENDER_TARGETS_COUNT] = {};
@@ -157,6 +160,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	}
 
 	context->OMSetRenderTargets(RENDER_TARGETS_COUNT - 1, renderTargets, depthBufferDSV.Get());
+	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
 	// Draw all of the entities
 	for (auto& ge : entities)
 	{
@@ -179,7 +183,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 
 	// Draw the light sources
 	//DrawPointLights(camera);
-
+	// 
 	//Do light rendering
 	context->OMSetRenderTargets(1, renderTargetsRTV[LIGHT_OUTPUT].GetAddressOf(), 0);
 	context->OMSetBlendState(deferredBS.Get(), 0, 0xFFFFFFFF);
@@ -196,20 +200,15 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		else if (l->GetType() == LIGHT_TYPE_POINT) {
 			context->OMSetDepthStencilState(pointLightDSS.Get(), 0);
 			context->RSSetState(pointLightRS.Get());
-
-			ps->SetData("lightInfo", (void*)&l->info, sizeof(Light));
 		}
 		//Set Per frame info (should be moved before the for loop)
-		ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
-		ps->SetMatrix4x4("invViewProj", l->GetTransform()->GetWorldInverseTransposeMatrix());
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
 
-		//Setting all our lighting information
+		//Setting all our GBuffer info
 		ps->SetShaderResourceView("OriginalColors", renderTargetsSRV[ALBEDO].Get());
 		ps->SetShaderResourceView("Normals", renderTargetsSRV[NORMALS].Get());
 		ps->SetShaderResourceView("Depths", renderTargetsSRV[DEPTHS].Get());
 		ps->SetShaderResourceView("RoughMetal", renderTargetsSRV[ROUGHMETAL].Get());
-		ps->CopyAllBufferData();
 
 		l->RenderLight(context, camera);
 	}
@@ -450,38 +449,49 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Renderer::CreatePostProcessResources()
+void Renderer::CreatePostProcessResources(int width, int height)
 {
-	for (int i = 0; i < RENDER_TARGETS_COUNT; i++)
-	{
-		Microsoft::WRL::ComPtr<ID3D11Texture2D> rtvText;
-		D3D11_TEXTURE2D_DESC texDesc = {};
-		if (i != VELOCITY && i != NEIGHBORHOOD_MAX)
-		{
-			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		}
-		else
-		{
-			texDesc.Format = DXGI_FORMAT_R16G16_FLOAT;
-		}
-		texDesc.Width = windowWidth;
-		texDesc.Height = windowHeight;
-		texDesc.ArraySize = 1;
-		texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-		texDesc.MipLevels = 1;
-		texDesc.MiscFlags = 0;
-		texDesc.SampleDesc.Count = 1;
-		device->CreateTexture2D(&texDesc, 0, rtvText.GetAddressOf());
+	/*Making RTVsand SRVs for
+	ALBEDO,
+	NORMALS,
+	ROUGHMETAL,
+	DEPTHS,
+	VELOCITY,
+	NEIGHBORHOOD_MAX,
+	LIGHT_OUTPUT,
+	SCENE,
+	RENDER_TARGETS_COUNT*/
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ALBEDO], renderTargetsSRV[ALBEDO], DXGI_FORMAT_R8G8B8A8_UNORM);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[NORMALS], renderTargetsSRV[NORMALS], DXGI_FORMAT_R16G16B16A16_FLOAT);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ROUGHMETAL], renderTargetsSRV[ROUGHMETAL], DXGI_FORMAT_R8G8B8A8_UNORM);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[DEPTHS], renderTargetsSRV[DEPTHS], DXGI_FORMAT_R32_FLOAT);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[VELOCITY], renderTargetsSRV[VELOCITY], DXGI_FORMAT_R32_FLOAT);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[NEIGHBORHOOD_MAX], renderTargetsSRV[NEIGHBORHOOD_MAX], DXGI_FORMAT_R32_FLOAT);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[LIGHT_OUTPUT], renderTargetsSRV[LIGHT_OUTPUT], DXGI_FORMAT_R16G16B16A16_FLOAT);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[SCENE], renderTargetsSRV[SCENE], DXGI_FORMAT_R8G8B8A8_UNORM);
+}
 
-		D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-		rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-		rtvDesc.Texture2D.MipSlice = 0;
-		rtvDesc.Format = texDesc.Format;
-		device->CreateRenderTargetView(rtvText.Get(), &rtvDesc, renderTargetsRTV[i].GetAddressOf());
+void Renderer::CreateRTV(int width, int height, Microsoft::WRL::ComPtr<ID3D11RenderTargetView>& rtv, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>& srv, DXGI_FORMAT format)
+{
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> rtvText;
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.Format = format;
+	texDesc.Width = windowWidth;
+	texDesc.Height = windowHeight;
+	texDesc.ArraySize = 1;
+	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	texDesc.MipLevels = 1;
+	texDesc.MiscFlags = 0;
+	texDesc.SampleDesc.Count = 1;
+	device->CreateTexture2D(&texDesc, 0, rtvText.GetAddressOf());
 
-		device->CreateShaderResourceView(rtvText.Get(), 0, renderTargetsSRV[i].GetAddressOf());
-	}
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.Format = texDesc.Format;
+	device->CreateRenderTargetView(rtvText.Get(), &rtvDesc, rtv.GetAddressOf());
 
+	device->CreateShaderResourceView(rtvText.Get(), 0, srv.GetAddressOf());
 }
 
 void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
