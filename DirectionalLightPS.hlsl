@@ -34,16 +34,16 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 normal = normalize(Normals.Sample(BasicSampler, uv).rgb * 2 - 1);
 	float depth = Depths.Sample(BasicSampler, uv).r;
 	float3 pixelWorldPos = WorldSpaceFromDepth(depth, uv, invViewProj);
-	float roughness = RoughMetal.Sample(BasicSampler, uv).r;
-	float metal = RoughMetal.Sample(BasicSampler, uv).g;
+	float3 metalRoughness = RoughMetal.Sample(BasicSampler,uv);
+	float metal = metalRoughness.r;
+	float roughness = metalRoughness.g;
 
 	// Specular color - Assuming albedo texture is actually holding specular color if metal == 1
 	// Note the use of lerp here - metal is generally 0 or 1, but might be in between
 	// because of linear texture sampling, so we want lerp the specular color to match
-	float3 specColor = lerp(F0_NON_METAL.rrr, surfaceColor.rgb, metal);
+	float3 specColor = lerp(F0_NON_METAL.rrr, surfaceColor, metal);
 	// Total color for this pixel
-	float3 totalColor = float3(0,0,0);
 
-	totalColor += DirLightPBR(lightInfo, normal, pixelWorldPos, cameraPosition, roughness, metal, surfaceColor.rgb, specColor);
+	float3 totalColor = DirLightPBR(lightInfo, normal, pixelWorldPos, cameraPosition, roughness, metal, surfaceColor.rgb, specColor);
 	return float4(totalColor, 1);
 }

@@ -49,13 +49,6 @@ Texture2D MetalMap			: register(t3);
 SamplerState BasicSampler	: register(s0);
 SamplerState ClampSampler	: register(s1);
 
-
-//IBL
-Texture2D BrdfLookUpMap		: register(t4);
-TextureCube IrradianceIBLMap	: register(t5);
-TextureCube SpecularIBLMap	: register(t6);
-
-
 // Entry point for this pixel shader
 PS_Output main(VertexToPixel input)
 {
@@ -90,7 +83,7 @@ PS_Output main(VertexToPixel input)
 
 	output.color = surfaceColor;
 	output.normals = float4(input.normal * .5f + 0.5f, 1);
-	output.roughmetal = float4(roughness, metal, 0, 0);
+	output.roughmetal = float4(roughness, metal, 0, 1);
 	output.depths = input.position.z;
 	output.velocity = velocity.xy;
 	return output;

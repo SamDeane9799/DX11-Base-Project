@@ -412,7 +412,7 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 		for (int i = 0; i < materials.size(); i++)
 		{
 			ImGui::PushID(i);
-			std::string label = "Material " + std::to_string(i + 1);
+			std::string label = materials[i]->GetName();
 			if (ImGui::TreeNode(label.c_str()))
 			{
 				XMFLOAT3 colorTint = materials[i]->GetColorTint();
@@ -463,7 +463,7 @@ void Renderer::CreatePostProcessResources(int width, int height)
 	RENDER_TARGETS_COUNT*/
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ALBEDO], renderTargetsSRV[ALBEDO], DXGI_FORMAT_R8G8B8A8_UNORM);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[NORMALS], renderTargetsSRV[NORMALS], DXGI_FORMAT_R16G16B16A16_FLOAT);
-	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ROUGHMETAL], renderTargetsSRV[ROUGHMETAL], DXGI_FORMAT_R8G8B8A8_UNORM);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ROUGHMETAL], renderTargetsSRV[ROUGHMETAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[DEPTHS], renderTargetsSRV[DEPTHS], DXGI_FORMAT_R32_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[VELOCITY], renderTargetsSRV[VELOCITY], DXGI_FORMAT_R32_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[NEIGHBORHOOD_MAX], renderTargetsSRV[NEIGHBORHOOD_MAX], DXGI_FORMAT_R32_FLOAT);

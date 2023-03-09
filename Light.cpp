@@ -72,7 +72,6 @@ void Light::SetPosition(DirectX::XMFLOAT3 position)
 void Light::RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
 {
 	vs->SetShader();
-	ps->SetShader();
 	
 	// Send data to the vertex shader
 	if (lightType != LIGHT_TYPE_DIRECTIONAL)

@@ -377,7 +377,7 @@ void Game::GenerateLights()
 	LightInfo dirInfo = {};
 	dirInfo.Direction = XMFLOAT3(1, -1, 1);
 	dirInfo.Color = XMFLOAT3(0.8f, 0.8f, 0.8f);
-	dirInfo.Intensity = 0.5f;
+	dirInfo.Intensity = 1.0f;
 	std::shared_ptr<Light> dir1 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo);
 	
 

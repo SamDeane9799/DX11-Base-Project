@@ -34,8 +34,9 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 normal = normalize(Normals.Sample(BasicSampler, uv).rgb * 2 - 1);
 	float depth = Depths.Sample(BasicSampler, uv).r;
 	float3 pixelWorldPos = WorldSpaceFromDepth(depth, uv, invViewProj);
-	float roughness = RoughMetal.Sample(BasicSampler, uv).r;
-	float metal = RoughMetal.Sample(BasicSampler, uv).g;
+	float2 roughMetal = RoughMetal.Sample(BasicSampler, uv).r;
+	float roughness = roughMetal.r;
+	float metal = roughMetal.g;
 
 	float3 specColor = lerp(F0_NON_METAL.rrr, surfaceColor.rgb, metal);
 
@@ -64,10 +65,10 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 
 	// Balance indirect diff/spec
+	/*
+	float3 balancedDiff = DiffuseEnergyConserve(indirectDiffuse, indirectSpecular, metal) * surfaceColor.rgb;
 
-	float3 balancedDiff = DiffuseEnergyConserve(indirectDiffuse, indirectSpecular, metal);
+	float3 fullIndirect = indirectSpecular + balancedDiff;*/
 
-	float3 fullIndirect = indirectSpecular + balancedDiff * surfaceColor.rgb;
-
-	return float4(LightOutput.Sample(BasicSampler, uv).rgb + fullIndirect, 1);
+	return float4(LightOutput.Sample(BasicSampler, uv).rgb + indirectSpecular, 1);
 }
