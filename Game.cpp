@@ -390,9 +390,10 @@ void Game::GenerateLights()
 		LightInfo info = {};
 		info.Color = XMFLOAT3(RandomRange(0, 1), RandomRange(0, 1), RandomRange(0, 1));
 		info.Intensity = RandomRange(0.1f, 3.0f);
+		info.Position = XMFLOAT3(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f));
+		info.Range = RandomRange(5.0f, 10.0f);
+
 		std::shared_ptr<Light> point = std::make_shared<Light>(LIGHT_TYPE_POINT, info);
-		point->SetPosition(XMFLOAT3(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f)));
-		point->SetRange(RandomRange(5.0f, 10.0f));
 
 		// Add to the list
 		lights.push_back(point);

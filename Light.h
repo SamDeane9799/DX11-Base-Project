@@ -30,13 +30,14 @@ class Light
 {
 public:
 	Light(int type, LightInfo lightInfo);
+	~Light();
 	inline std::shared_ptr<Mesh> GetMesh() { return mesh; };
-	inline Transform* GetTransform() { return &transform; };
+	inline Transform* GetTransform() { return transform; };
 	inline std::shared_ptr<SimplePixelShader> GetPixelShader() { return ps; }
 	inline int GetType() { return lightType; }
-	void SetRange(int range);
-	void SetDirection(DirectX::XMFLOAT3 direction);
-	void SetPosition(DirectX::XMFLOAT3 position);
+	inline bool GetEnabled() { return enabled; }
+	inline void SetEnabled(bool Enabled) { enabled = Enabled; }
+	inline void ToggleEnabled() { enabled = !enabled; }
 
 
 	void RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera);
@@ -46,9 +47,10 @@ public:
 private:
 	int lightType;
 	std::shared_ptr<Mesh> mesh;
-	Transform transform;
+	Transform* transform;
 	std::shared_ptr<SimpleVertexShader> vs;
 	std::shared_ptr<SimplePixelShader> ps;
+	bool enabled;
 
 };
 

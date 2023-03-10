@@ -7,6 +7,11 @@ cbuffer perFrame : register(b1)
 	int specIBLTotalMipLevels;
 }
 
+struct PS_Output
+{
+	float4 scene	: SV_TARGET0;
+	float4 sceneAmbient: SV_TARGET1;
+};
 struct VertexToPixel
 {
 	float4 screenPosition	: SV_POSITION;
@@ -17,7 +22,7 @@ Texture2D OriginalColors	: register(t0);
 Texture2D Normals			: register(t1);
 Texture2D RoughMetal		: register(t2);
 Texture2D Depths			: register(t3);
-Texture2D LightOutput		: register(t8);
+Texture2D LightOutput		: register(t4);
 //IBL
 Texture2D BrdfLookUpMap		: register(t5);
 TextureCube IrradianceIBLMap: register(t6);
@@ -26,14 +31,15 @@ TextureCube SpecularIBLMap	: register(t7);
 SamplerState BasicSampler	: register(s0);
 SamplerState ClampSampler	: register(s1);
 
-float4 main(VertexToPixel input) : SV_TARGET
+PS_Output main(VertexToPixel input) : SV_TARGET
 {
+	PS_Output output;
 	float3 uv = float3(input.uv, 0);
 
 	float3 surfaceColor = OriginalColors.Sample(BasicSampler, uv).rgb;
 	float3 normal = normalize(Normals.Sample(BasicSampler, uv).rgb * 2 - 1);
 	float depth = Depths.Sample(BasicSampler, uv).r;
-	float3 pixelWorldPos = WorldSpaceFromDepth(depth, uv, invViewProj);
+	float3 pixelWorldPos = WorldSpaceFromDepth(depth, input.uv, invViewProj);
 	float2 roughMetal = RoughMetal.Sample(BasicSampler, uv).r;
 	float roughness = roughMetal.r;
 	float metal = roughMetal.g;
@@ -65,10 +71,12 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 
 	// Balance indirect diff/spec
-	/*
+	
 	float3 balancedDiff = DiffuseEnergyConserve(indirectDiffuse, indirectSpecular, metal) * surfaceColor.rgb;
 
-	float3 fullIndirect = indirectSpecular + balancedDiff;*/
-
-	return float4(LightOutput.Sample(BasicSampler, uv).rgb + indirectSpecular, 1);
+	float3 fullIndirect = indirectSpecular + balancedDiff;
+	
+	output.scene = float4(LightOutput.Sample(BasicSampler, uv).rgb + fullIndirect, 1);
+	output.sceneAmbient = float4(fullIndirect, 1);
+	return output;
 }

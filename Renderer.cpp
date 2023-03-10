@@ -142,24 +142,29 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
-	for (int i = 0; i < RENDER_TARGETS_COUNT; i++)
+
+
+	for (int i = 0; i < RENDER_TARGETS_COUNT - 1; i++)
 	{
 		context->ClearRenderTargetView(renderTargetsRTV[i].Get(), color);
 	}
 
 	const float white[4] = { 1, 1, 1, 1 };
+	ID3D11RenderTargetView* targets[RENDER_TARGETS_COUNT - 1] = {};
 
 	context->ClearRenderTargetView(renderTargetsRTV[DEPTHS].Get(), white);
-
-
-
 	ID3D11RenderTargetView* renderTargets[RENDER_TARGETS_COUNT] = {};
 	for (int i = 0; i < RENDER_TARGETS_COUNT - 1; i++)
 	{
 		renderTargets[i] = renderTargetsRTV[i].Get();
 	}
 
-	context->OMSetRenderTargets(RENDER_TARGETS_COUNT - 1, renderTargets, depthBufferDSV.Get());
+	targets[0] = renderTargetsRTV[ALBEDO].Get();
+	targets[1] = renderTargetsRTV[NORMALS].Get();
+	targets[2] = renderTargetsRTV[ROUGHMETAL].Get();
+	targets[3] = renderTargetsRTV[DEPTHS].Get();
+	targets[4] = renderTargetsRTV[VELOCITY].Get();
+	context->OMSetRenderTargets(RENDER_TARGETS_COUNT - 1, targets, depthBufferDSV.Get());
 	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
 	// Draw all of the entities
 	for (auto& ge : entities)
@@ -182,14 +187,19 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	}
 
 	// Draw the light sources
-	//DrawPointLights(camera);
-	// 
+	if (settings.drawLights) {
+		DrawPointLights(camera);
+	}
+	
 	//Do light rendering
 	context->OMSetRenderTargets(1, renderTargetsRTV[LIGHT_OUTPUT].GetAddressOf(), 0);
 	context->OMSetBlendState(deferredBS.Get(), 0, 0xFFFFFFFF);
 	previousLightType = -1;
 	for (auto& l : lights)
 	{
+		if (!l->GetEnabled())
+			continue;
+
 		std::shared_ptr<SimplePixelShader> ps = l->GetPixelShader();
 		ps->SetShader();
 
@@ -217,7 +227,9 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
 
 
-	context->OMSetRenderTargets(1, renderTargetsRTV[SCENE].GetAddressOf(), 0);
+	targets[0] = renderTargetsRTV[SCENE].Get();
+	targets[1] = renderTargetsRTV[SCENE_AMBIENT].Get();
+	context->OMSetRenderTargets(2, targets, 0);
 	Assets::GetInstance().GetVertexShader("FullscreenVS")->SetShader();
 	//Final Light Combine
 	{
@@ -239,6 +251,7 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		ps->SetShaderResourceView("BrdfLookUpMap", sky->GetBrdfLookUp());
 		ps->SetShaderResourceView("IrradianceIBLMap", sky->GetIrradianceMap());
 		ps->SetShaderResourceView("SpecularIBLMap", sky->getConvolvedSpecularMap());
+		ps->CopyAllBufferData();
 
 		context->Draw(3, 0);
 	}
@@ -352,8 +365,16 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 			std::string label = "Light " + std::to_string(i + 1);
 			if (ImGui::TreeNode(label.c_str()))
 			{
+				const char* enabledLabel = "Enable";
+				if (lights[i]->GetEnabled())
+					enabledLabel = "Disable";
+				if (ImGui::Button(enabledLabel, ImVec2(128, 32))) {
+					lights[i]->ToggleEnabled();
+				}
 				ImGui::ColorEdit3("Light Color", &lights[i]->info.Color.x);
 				ImGui::DragFloat3("Light Direction", &lights[i]->info.Direction.x);
+				if(lights[i]->GetType() != LIGHT_TYPE_DIRECTIONAL)
+					ImGui::DragFloat3("Light Position", &lights[i]->info.Position.x, 0.1f);
 				ImGui::TreePop();
 			}
 			ImGui::PopID();
@@ -425,6 +446,8 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 				ImGui::Image((void*)materials[i]->GetTextureSRV("NormalMap").Get(), ImVec2(256, 256));
 				ImGui::Text("Roughness Map");
 				ImGui::Image((void*)materials[i]->GetTextureSRV("RoughnessMap").Get(), ImVec2(256, 256));
+				ImGui::Text("Metal Map");
+				ImGui::Image((void*)materials[i]->GetTextureSRV("MetalMap").Get(), ImVec2(256, 256));
 				ImGui::TreePop();
 			}
 			ImGui::PopID();
@@ -443,6 +466,29 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 		ImGui::DragInt("Motion Blur Samples", &motionBlurNeighborhoodSamples, 1, 0, 64);
 		ImGui::DragInt("Max Motion Blur", &motionBlurMax, 1, 0, 64);
 		
+	}
+	if (ImGui::CollapsingHeader("Settings")) {
+		ImGui::Indent();
+		if (ImGui::CollapsingHeader("Lighting")) {
+			ImGui::Indent();
+			if (ImGui::Button("Draw Lights", ImVec2(256, 32))) {
+				settings.drawLights = !settings.drawLights;
+			}
+			const char* directionalLightText = "Enable Directional Lights";
+			if (settings.directionalLightsEnabled)
+				directionalLightText = "Disable Directional Lights";
+			if (ImGui::Button(directionalLightText, ImVec2(256, 32))) {
+				settings.directionalLightsEnabled = !settings.directionalLightsEnabled;
+				ToggleLightsOfAllTypes(LIGHT_TYPE_DIRECTIONAL, settings.directionalLightsEnabled);
+			}
+			const char* pointLightText = "Enable Point Lights";
+			if (settings.pointLightsEnabled)
+				pointLightText = "Disable Point Lights";
+			if (ImGui::Button(pointLightText, ImVec2(256, 32))) {
+				settings.pointLightsEnabled = !settings.pointLightsEnabled;
+				ToggleLightsOfAllTypes(LIGHT_TYPE_POINT, settings.pointLightsEnabled);
+			}
+		}
 	}
 	ImGui::End();
 	ImGui::Render();
@@ -463,12 +509,13 @@ void Renderer::CreatePostProcessResources(int width, int height)
 	RENDER_TARGETS_COUNT*/
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ALBEDO], renderTargetsSRV[ALBEDO], DXGI_FORMAT_R8G8B8A8_UNORM);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[NORMALS], renderTargetsSRV[NORMALS], DXGI_FORMAT_R16G16B16A16_FLOAT);
-	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ROUGHMETAL], renderTargetsSRV[ROUGHMETAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[ROUGHMETAL], renderTargetsSRV[ROUGHMETAL], DXGI_FORMAT_R8G8B8A8_UNORM);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[DEPTHS], renderTargetsSRV[DEPTHS], DXGI_FORMAT_R32_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[VELOCITY], renderTargetsSRV[VELOCITY], DXGI_FORMAT_R32_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[NEIGHBORHOOD_MAX], renderTargetsSRV[NEIGHBORHOOD_MAX], DXGI_FORMAT_R32_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[LIGHT_OUTPUT], renderTargetsSRV[LIGHT_OUTPUT], DXGI_FORMAT_R16G16B16A16_FLOAT);
 	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[SCENE], renderTargetsSRV[SCENE], DXGI_FORMAT_R8G8B8A8_UNORM);
+	CreateRTV(windowWidth, windowHeight, renderTargetsRTV[SCENE_AMBIENT], renderTargetsSRV[SCENE_AMBIENT], DXGI_FORMAT_R8G8B8A8_UNORM);
 }
 
 void Renderer::CreateRTV(int width, int height, Microsoft::WRL::ComPtr<ID3D11RenderTargetView>& rtv, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>& srv, DXGI_FORMAT format)
@@ -492,6 +539,14 @@ void Renderer::CreateRTV(int width, int height, Microsoft::WRL::ComPtr<ID3D11Ren
 	device->CreateRenderTargetView(rtvText.Get(), &rtvDesc, rtv.GetAddressOf());
 
 	device->CreateShaderResourceView(rtvText.Get(), 0, srv.GetAddressOf());
+}
+
+void Renderer::ToggleLightsOfAllTypes(int type, bool toggleTo)
+{
+	for (int i = 0; i < lights.size(); i++) {
+		if (lights[i]->GetType() == type)
+			lights[i]->SetEnabled(toggleTo);
+	}
 }
 
 void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)

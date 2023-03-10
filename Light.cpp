@@ -6,6 +6,8 @@ Light::Light(int type, LightInfo lightInfo)
 	Assets& instance = Assets::GetInstance();
 	lightType = type;
 	info = lightInfo;
+	enabled = true;
+	transform = new Transform();
 	switch (type)
 	{
 	case LIGHT_TYPE_DIRECTIONAL:
@@ -19,7 +21,6 @@ Light::Light(int type, LightInfo lightInfo)
 		break;
 	case LIGHT_TYPE_SPOT:
 		mesh = instance.GetMesh("cone");
-		transform.Rotate(0, 0, 180);
 		vs = instance.GetVertexShader("VertexShader");
 		default:
 			break;
@@ -27,68 +28,36 @@ Light::Light(int type, LightInfo lightInfo)
 
 }
 
-void Light::SetRange(int range)
+Light::~Light()
 {
-	switch (lightType)
-	{
-	case LIGHT_TYPE_POINT || LIGHT_TYPE_SPOT:
-		transform.Scale(range, range, range);
-		info.Range = range;
-		break;
-	default:
-		break;
-	}
-}
-
-void Light::SetDirection(DirectX::XMFLOAT3 direction)
-{
-	switch (lightType)
-	{
-	case LIGHT_TYPE_SPOT :
-		transform.SetRotation(direction.x + 180, direction.y, direction.z);
-		info.Direction = direction;
-		break;
-	case LIGHT_TYPE_DIRECTIONAL: 
-		info.Direction = direction;
-		break;
-	default:
-		break;
-	}
-}
-
-void Light::SetPosition(DirectX::XMFLOAT3 position)
-{
-	switch (lightType)
-	{
-	case LIGHT_TYPE_SPOT || LIGHT_TYPE_POINT:
-		transform.SetPosition(position.x, position.y, position.z);
-		info.Position = position;
-		break;
-	default:
-		break;
-	}
+	delete transform;
 }
 
 void Light::RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std::shared_ptr<Camera> camera)
 {
 	vs->SetShader();
-	
+	if (lightType != LIGHT_TYPE_POINT)
+	{
+		transform->SetRotation(info.Direction.x, info.Direction.y, info.Direction.z);
+	}
 	// Send data to the vertex shader
 	if (lightType != LIGHT_TYPE_DIRECTIONAL)
 	{
-		vs->SetMatrix4x4("world", transform.GetWorldMatrix());
+		transform->SetPosition(info.Position.x, info.Position.y, info.Position.z);
+		transform->SetScale(info.Range, info.Range, info.Range);
+		vs->SetMatrix4x4("world", transform->GetWorldMatrix());
 		vs->SetMatrix4x4("view", camera->GetView());
 		vs->SetMatrix4x4("projection", camera->GetProjection());
 		vs->CopyAllBufferData();
 
-		ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
 	}
-
-	ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
-	ps->SetData("lightInfo", (void*)(&info), sizeof(LightInfo));
 	if (lightType == LIGHT_TYPE_SPOT) {
 		ps->SetFloat("SpotFalloff", info.SpotFalloff);
 	}
+
+	ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());
+	ps->SetMatrix4x4("invViewProj", camera->GetInvViewProj());
+	ps->SetData("lightInfo", (void*)(&info), sizeof(LightInfo));
 	ps->CopyAllBufferData();
 	//Send input to pixel shader
 	if (lightType != LIGHT_TYPE_DIRECTIONAL)

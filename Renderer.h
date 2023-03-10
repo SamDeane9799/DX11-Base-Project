@@ -13,6 +13,7 @@
 #include "Light.h"
 #include "Emitter.h"
 #include "Sky.h"
+#include "Settings.h"
 
 enum RenderTargetType
 { 
@@ -24,6 +25,7 @@ enum RenderTargetType
 	NEIGHBORHOOD_MAX,
 	LIGHT_OUTPUT,
 	SCENE,
+	SCENE_AMBIENT,
 	RENDER_TARGETS_COUNT
 };
 
@@ -49,6 +51,8 @@ private:
 	void CreatePostProcessResources(int width, int height);
 
 	void CreateRTV(int width, int height, Microsoft::WRL::ComPtr<ID3D11RenderTargetView>& rtv, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>& srv, DXGI_FORMAT format);
+
+	void ToggleLightsOfAllTypes(int type, bool toggleTo);
 
 	Microsoft::WRL::ComPtr<ID3D11Device> device;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
@@ -81,5 +85,7 @@ private:
 
 	DirectX::XMFLOAT4X4 prevView;
 	DirectX::XMFLOAT4X4 prevProj;
+
+	Settings settings;
 };
 

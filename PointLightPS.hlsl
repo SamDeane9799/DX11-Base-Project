@@ -33,9 +33,9 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 surfaceColor = OriginalColors.Load(index).rgb;
 	float3 normal = normalize(Normals.Load(index).rgb * 2 - 1);
 	float depth = Depths.Load(index).r;
-	float3 metalRoughness = RoughMetal.Load(index);
-	float metal = metalRoughness.r;
-	float roughness = metalRoughness.g;
+	float3 roughMetal = RoughMetal.Load(index);
+	float roughness = roughMetal.r;
+	float metal = roughMetal.g;
 
 	// Specular color - Assuming albedo texture is actually holding specular color if metal == 1
 	// Note the use of lerp here - metal is generally 0 or 1, but might be in between
