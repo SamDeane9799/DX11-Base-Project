@@ -76,7 +76,7 @@ PS_Output main(VertexToPixel input) : SV_TARGET
 
 	float3 fullIndirect = indirectSpecular + balancedDiff * surfaceColor.rgb;
 	
-	output.scene = float4(LightOutput.Sample(BasicSampler, uv).rgb + fullIndirect, 1);
+	output.scene = float4(pow(LightOutput.Sample(BasicSampler, uv).rgb + fullIndirect, 1.0f/2.2f), 1);
 	output.sceneAmbient = float4(fullIndirect, 1);
 	return output;
 }

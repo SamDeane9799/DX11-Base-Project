@@ -33,7 +33,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 normal = normalize(Normals.Sample(BasicSampler, uv).rgb * 2 - 1);
 	float depth = Depths.Sample(BasicSampler, uv).r;
 	float3 pixelWorldPos = WorldSpaceFromDepth(depth, input.uv, invViewProj);
-	float3 roughMetal = RoughMetal.Sample(BasicSampler,uv).rgb;
+	float2 roughMetal = RoughMetal.Sample(BasicSampler,uv).rg;
 	float roughness = roughMetal.r;
 	float metal = roughMetal.g;
 

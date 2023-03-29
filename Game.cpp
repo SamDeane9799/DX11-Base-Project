@@ -379,9 +379,22 @@ void Game::GenerateLights()
 	dirInfo.Color = XMFLOAT3(0.8f, 0.8f, 0.8f);
 	dirInfo.Intensity = 1.0f;
 	std::shared_ptr<Light> dir1 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo);
-	
+
+	LightInfo dirInfo2 = {};
+	dirInfo2.Direction = XMFLOAT3(-1, -0.25f, 0);
+	dirInfo2.Color = XMFLOAT3(0.2f, 0.2f, 0.2f);
+	dirInfo2.Intensity = 1.0f;
+	std::shared_ptr<Light> dir2 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo2);// Setup directional lights
+
+	LightInfo dirInfo3 = {};
+	dirInfo3.Direction = XMFLOAT3(0, -1, 1);
+	dirInfo3.Color = XMFLOAT3(0.2f, 0.2f, 0.2f);
+	dirInfo3.Intensity = 1.0f;
+	std::shared_ptr<Light> dir3 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo3);// Setup directional lights
 
 	lights.push_back(dir1);
+	lights.push_back(dir2);
+	lights.push_back(dir3);
 	
 	// Create the rest of the lights
 	//Create new lights for deferred rendering
