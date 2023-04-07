@@ -22,6 +22,7 @@ Light::Light(int type, LightInfo lightInfo)
 	case LIGHT_TYPE_SPOT:
 		mesh = instance.GetMesh("cone");
 		vs = instance.GetVertexShader("VertexShader");
+		ps = instance.GetPixelShader("SpotLightPS");
 		default:
 			break;
 	}
@@ -49,10 +50,6 @@ void Light::RenderLight(Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, std
 		vs->SetMatrix4x4("view", camera->GetView());
 		vs->SetMatrix4x4("projection", camera->GetProjection());
 		vs->CopyAllBufferData();
-
-	}
-	if (lightType == LIGHT_TYPE_SPOT) {
-		ps->SetFloat("SpotFalloff", info.SpotFalloff);
 	}
 
 	ps->SetFloat3("cameraPosition", camera->GetTransform()->GetPosition());

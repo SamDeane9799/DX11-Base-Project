@@ -151,7 +151,7 @@ void Game::LoadAssetsAndCreateEntities()
 		context);
 
 	// Create PBR materials
-	std::shared_ptr<Material> cobbleMat2xPBR = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Cobble2x PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> cobbleMat2xPBR = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Cobble2x PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	cobbleMat2xPBR->AddSampler("BasicSampler", samplerOptions);
 	cobbleMat2xPBR->AddSampler("ClampSampler", clampSamplerOptions);
 	cobbleMat2xPBR->AddTextureSRV("Albedo", instance.GetTexture("cobblestone_albedo"));
@@ -169,7 +169,7 @@ void Game::LoadAssetsAndCreateEntities()
 	cobbleMat4xPBR->AddTextureSRV("MetalMap", instance.GetTexture("cobblestone_metal"));
 	materials.push_back(cobbleMat4xPBR);
 
-	std::shared_ptr<Material> floorMatPBR = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Floor PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> floorMatPBR = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Floor PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	floorMatPBR->AddSampler("BasicSampler", samplerOptions);
 	floorMatPBR->AddSampler("ClampSampler", clampSamplerOptions);
 	floorMatPBR->AddTextureSRV("Albedo", instance.GetTexture("floor_albedo"));
@@ -178,7 +178,7 @@ void Game::LoadAssetsAndCreateEntities()
 	floorMatPBR->AddTextureSRV("MetalMap", instance.GetTexture("floor_metal"));
 	materials.push_back(floorMatPBR);
 
-	std::shared_ptr<Material> paintMatPBR = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Paint PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> paintMatPBR = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Paint PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	paintMatPBR->AddSampler("BasicSampler", samplerOptions);
 	paintMatPBR->AddSampler("ClampSampler", clampSamplerOptions);
 	paintMatPBR->AddTextureSRV("Albedo", instance.GetTexture("paint_albedo"));
@@ -196,7 +196,7 @@ void Game::LoadAssetsAndCreateEntities()
 	scratchedMatPBR->AddTextureSRV("MetalMap", instance.GetTexture("scratched_metal"));
 	materials.push_back(scratchedMatPBR);
 
-	std::shared_ptr<Material> bronzeMatPBR = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Bronze PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> bronzeMatPBR = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Bronze PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	bronzeMatPBR->AddSampler("BasicSampler", samplerOptions);
 	bronzeMatPBR->AddSampler("ClampSampler", clampSamplerOptions);
 	bronzeMatPBR->AddTextureSRV("Albedo", instance.GetTexture("bronze_albedo"));
@@ -205,7 +205,7 @@ void Game::LoadAssetsAndCreateEntities()
 	bronzeMatPBR->AddTextureSRV("MetalMap", instance.GetTexture("bronze_metal"));
 	materials.push_back(bronzeMatPBR);
 
-	std::shared_ptr<Material> roughMatPBR = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Rough PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> roughMatPBR = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Rough PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	roughMatPBR->AddSampler("BasicSampler", samplerOptions);
 	roughMatPBR->AddSampler("ClampSampler", clampSamplerOptions);
 	roughMatPBR->AddTextureSRV("Albedo", instance.GetTexture("rough_albedo"));
@@ -214,7 +214,7 @@ void Game::LoadAssetsAndCreateEntities()
 	roughMatPBR->AddTextureSRV("MetalMap", instance.GetTexture("rough_metal"));
 	materials.push_back(roughMatPBR);
 
-	std::shared_ptr<Material> woodMatPBR = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Wood PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> woodMatPBR = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Wood PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	woodMatPBR->AddSampler("BasicSampler", samplerOptions);
 	woodMatPBR->AddSampler("ClampSampler", clampSamplerOptions);
 	woodMatPBR->AddTextureSRV("Albedo", instance.GetTexture("wood_albedo"));
@@ -223,7 +223,7 @@ void Game::LoadAssetsAndCreateEntities()
 	woodMatPBR->AddTextureSRV("MetalMap", instance.GetTexture("wood_metal"));
 	materials.push_back(woodMatPBR);
 	
-	std::shared_ptr<Material> IBLTestMat1 = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Test PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> IBLTestMat1 = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Test PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	IBLTestMat1->AddSampler("BasicSampler", samplerOptions);
 	IBLTestMat1->AddSampler("ClampSampler", clampSamplerOptions);
 	IBLTestMat1->AddTextureSRV("Albedo", instance.GetTexture("white_albedo"));
@@ -231,7 +231,7 @@ void Game::LoadAssetsAndCreateEntities()
 	IBLTestMat1->AddTextureSRV("RoughnessMap", instance.GetTexture("white_smooth"));
 	IBLTestMat1->AddTextureSRV("MetalMap", instance.GetTexture("paint_metal"));
 	materials.push_back(IBLTestMat1); 
-	std::shared_ptr<Material> IBLTestMat2 = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Test 2 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> IBLTestMat2 = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Test 2 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	IBLTestMat2->AddSampler("BasicSampler", samplerOptions);
 	IBLTestMat2->AddSampler("ClampSampler", clampSamplerOptions);
 	IBLTestMat2->AddTextureSRV("Albedo", instance.GetTexture("white_albedo"));
@@ -239,7 +239,7 @@ void Game::LoadAssetsAndCreateEntities()
 	IBLTestMat2->AddTextureSRV("RoughnessMap", instance.GetTexture("white_matte"));
 	IBLTestMat2->AddTextureSRV("MetalMap", instance.GetTexture("paint_metal"));
 	materials.push_back(IBLTestMat2);
-	std::shared_ptr<Material> IBLTestMat3 = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Test 3 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> IBLTestMat3 = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Test 3 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	IBLTestMat3->AddSampler("BasicSampler", samplerOptions);
 	IBLTestMat3->AddSampler("ClampSampler", clampSamplerOptions);
 	IBLTestMat3->AddTextureSRV("Albedo", instance.GetTexture("white_albedo"));
@@ -247,7 +247,7 @@ void Game::LoadAssetsAndCreateEntities()
 	IBLTestMat3->AddTextureSRV("RoughnessMap", instance.GetTexture("white_rough"));
 	IBLTestMat3->AddTextureSRV("MetalMap", instance.GetTexture("paint_metal"));
 	materials.push_back(IBLTestMat3);
-	std::shared_ptr<Material> IBLTestMat4 = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Test 4 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> IBLTestMat4 = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Test 4 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	IBLTestMat4->AddSampler("BasicSampler", samplerOptions);
 	IBLTestMat4->AddSampler("ClampSampler", clampSamplerOptions);
 	IBLTestMat4->AddTextureSRV("Albedo", instance.GetTexture("white_albedo"));
@@ -255,7 +255,7 @@ void Game::LoadAssetsAndCreateEntities()
 	IBLTestMat4->AddTextureSRV("RoughnessMap", instance.GetTexture("white_smooth"));
 	IBLTestMat4->AddTextureSRV("MetalMap", instance.GetTexture("bronze_metal"));
 	materials.push_back(IBLTestMat4);
-	std::shared_ptr<Material> IBLTestMat5 = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Test 5 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> IBLTestMat5 = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Test 5 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	IBLTestMat5->AddSampler("BasicSampler", samplerOptions);
 	IBLTestMat5->AddSampler("ClampSampler", clampSamplerOptions);
 	IBLTestMat5->AddTextureSRV("Albedo", instance.GetTexture("white_albedo"));
@@ -263,7 +263,7 @@ void Game::LoadAssetsAndCreateEntities()
 	IBLTestMat5->AddTextureSRV("RoughnessMap", instance.GetTexture("white_matte"));
 	IBLTestMat5->AddTextureSRV("MetalMap", instance.GetTexture("bronze_metal"));
 	materials.push_back(IBLTestMat5);
-	std::shared_ptr<Material> IBLTestMat6 = std::make_shared<Material>(instance.GetPixelShader("PixelShaderPBR"), instance.GetVertexShader("VertexShader"), "Test 6 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
+	std::shared_ptr<Material> IBLTestMat6 = std::make_shared<Material>(instance.GetPixelShader("GBufferPS"), instance.GetVertexShader("VertexShader"), "Test 6 PBR", XMFLOAT3(1, 1, 1), XMFLOAT2(2, 2));
 	IBLTestMat6->AddSampler("BasicSampler", samplerOptions);
 	IBLTestMat6->AddSampler("ClampSampler", clampSamplerOptions);
 	IBLTestMat6->AddTextureSRV("Albedo", instance.GetTexture("white_albedo"));
@@ -392,9 +392,18 @@ void Game::GenerateLights()
 	dirInfo3.Intensity = 1.0f;
 	std::shared_ptr<Light> dir3 = std::make_shared<Light>(LIGHT_TYPE_DIRECTIONAL, dirInfo3);// Setup directional lights
 
+	LightInfo spotLight = {};
+	spotLight.Direction = XMFLOAT3(0, -1, 1);
+	spotLight.Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	spotLight.Intensity = 0.5f;
+	spotLight.SpotFalloff = 0.1f;
+	spotLight.Range = 10.0f;
+	std::shared_ptr<Light> spot = std::make_shared<Light>(LIGHT_TYPE_SPOT, spotLight);// Setup Spot light
+
 	lights.push_back(dir1);
 	lights.push_back(dir2);
 	lights.push_back(dir3);
+	lights.push_back(spot);
 	
 	// Create the rest of the lights
 	//Create new lights for deferred rendering

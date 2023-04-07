@@ -175,7 +175,7 @@
     <FxCompile Include="VertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="PixelShaderPBR.hlsl">
+    <FxCompile Include="GBufferPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SolidColorPS.hlsl">
@@ -230,6 +230,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="DeferredCombinePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="SpotLightPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

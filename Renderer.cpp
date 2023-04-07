@@ -98,6 +98,7 @@ Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::
 	dsDesc.DepthFunc = D3D11_COMPARISON_GREATER;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 	device->CreateDepthStencilState(&dsDesc, pointLightDSS.GetAddressOf());
+	SortLights();
 }
 
 Renderer::~Renderer()
@@ -203,13 +204,15 @@ void Renderer::Render(shared_ptr<Camera> camera, vector<shared_ptr<Material>> ma
 		std::shared_ptr<SimplePixelShader> ps = l->GetPixelShader();
 		ps->SetShader();
 
-		if (l->GetType() == LIGHT_TYPE_DIRECTIONAL) {
+		if (l->GetType() == LIGHT_TYPE_DIRECTIONAL && previousLightType != LIGHT_TYPE_DIRECTIONAL) {
 			context->OMSetDepthStencilState(directionalLightDSS.Get(), 0);
 			context->RSSetState(0);
+			previousLightType = LIGHT_TYPE_DIRECTIONAL;
 		}
-		else if (l->GetType() == LIGHT_TYPE_POINT) {
+		else if ((l->GetType() == LIGHT_TYPE_POINT || l->GetType() == LIGHT_TYPE_SPOT) && (previousLightType != LIGHT_TYPE_SPOT && previousLightType != LIGHT_TYPE_POINT)) {
 			context->OMSetDepthStencilState(pointLightDSS.Get(), 0);
 			context->RSSetState(pointLightRS.Get());
+			previousLightType = LIGHT_TYPE_POINT;
 		}
 		//Set Per frame info (should be moved before the for loop)
 		ps->SetFloat2("screenSize", DirectX::XMFLOAT2(windowWidth, windowHeight));
@@ -488,6 +491,13 @@ void Renderer::DrawUI(vector<shared_ptr<Material>> materials, float deltaTime)
 				settings.pointLightsEnabled = !settings.pointLightsEnabled;
 				ToggleLightsOfAllTypes(LIGHT_TYPE_POINT, settings.pointLightsEnabled);
 			}
+			const char* spotLightText = "Enable Spot Lights";
+			if (settings.spotLightsEnabled)
+				spotLightText = "Disable Spot Lights";
+			if (ImGui::Button(spotLightText, ImVec2(256, 32))) {
+				settings.spotLightsEnabled = !settings.spotLightsEnabled;
+				ToggleLightsOfAllTypes(LIGHT_TYPE_SPOT, settings.spotLightsEnabled);
+			}
 		}
 	}
 	ImGui::End();
@@ -595,4 +605,20 @@ void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
 		lightMesh->SetBuffersAndDraw(context);
 		lightTransform = nullptr;
 	}
+}
+
+void Renderer::SortLights()
+{
+	////Moving Directional Lights to front
+	//{
+	//	for (std::vector<shared_ptr<Light>>::iterator it = lights.begin(); it != lights.end(); it++)
+	//	{
+	//		if (it->get()->GetType() == LIGHT_TYPE_DIRECTIONAL)
+	//		{
+	//			for (std::vector<shared_ptr<Light>>::iterator secondIT = it; secondIT != lights.end(); secondIT++) {
+	//				lights.swap()
+	//			}
+	//		}
+	//	}
+	//}
 }

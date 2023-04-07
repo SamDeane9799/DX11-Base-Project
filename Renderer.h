@@ -46,6 +46,8 @@ private:
 
 	void DrawPointLights(std::shared_ptr<Camera> camera);
 
+	void SortLights();
+
 	void DrawUI(std::vector<std::shared_ptr<Material>> materials, float deltaTime);
 
 	void CreatePostProcessResources(int width, int height);
