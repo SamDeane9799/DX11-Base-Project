@@ -17,6 +17,8 @@ Renderer::Renderer(Microsoft::WRL::ComPtr<ID3D11Device> Device, Microsoft::WRL::
 		entities(Entities),
 		emitters(Emitters)
 {
+	MergeSort(lights, 0, lights.size() - 1);
+
 	device = Device;
 	context = Context;
 	swapChain = SwapChain;
@@ -609,16 +611,66 @@ void Renderer::DrawPointLights(std::shared_ptr<Camera> camera)
 
 void Renderer::SortLights()
 {
-	////Moving Directional Lights to front
-	//{
-	//	for (std::vector<shared_ptr<Light>>::iterator it = lights.begin(); it != lights.end(); it++)
-	//	{
-	//		if (it->get()->GetType() == LIGHT_TYPE_DIRECTIONAL)
-	//		{
-	//			for (std::vector<shared_ptr<Light>>::iterator secondIT = it; secondIT != lights.end(); secondIT++) {
-	//				lights.swap()
-	//			}
-	//		}
-	//	}
-	//}
+	//Merge sort without multithreading
+}
+
+void Renderer::Merge(std::vector<std::shared_ptr<Light>>& lightArray, const int begin, const int mid, const int end)
+{
+	const int leftLength = mid - begin + 1;
+	const int rightLength = end - mid;
+
+	vector<std::shared_ptr<Light>> left;
+	vector<std::shared_ptr<Light>> right;
+
+	for (int i = 0; i < leftLength; i++)
+	{
+		left.push_back(lightArray[begin + i]);
+	}
+	for(int i = 0; i < rightLength; i++)
+	{
+		right.push_back(lightArray[mid + 1 + i]);
+	}
+
+	int leftIndex = 0;
+	int rightIndex = 0;
+	int indexOfMerge = begin;
+
+	while (leftIndex < leftLength
+		&& rightIndex < rightLength) {
+		if (left[leftIndex]->GetType() < right[rightIndex]->GetType())
+		{
+			lightArray[indexOfMerge] = left[leftIndex];
+			leftIndex++;
+		}
+		else
+		{
+			lightArray[indexOfMerge] = right[rightIndex];
+			rightIndex++;
+		}
+		indexOfMerge++;
+	}
+
+	while (leftIndex < leftLength) {
+		lightArray[indexOfMerge] = left[leftIndex];
+		leftIndex++;
+		indexOfMerge++;
+	}
+	while (rightIndex < rightLength) {
+		lightArray[indexOfMerge] = right[rightIndex];
+		rightIndex++;
+		indexOfMerge++;
+	}
+}
+
+void Renderer::MergeSort(std::vector<std::shared_ptr<Light>>& lightArray, const int begin, const int end)
+{
+	if (begin >= end)
+	{
+		return;
+	}
+
+	int mid = begin + (end - begin) / 2;
+	MergeSort(lightArray, begin, mid);
+	MergeSort(lightArray, mid + 1, end);
+	Merge(lightArray, begin, mid, end);
 }

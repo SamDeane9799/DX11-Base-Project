@@ -94,7 +94,7 @@ void Game::Init()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set up lights initially
-	lightCount = 10;
+	lightCount = 1000;
 	GenerateLights();
 
 	// Make our camera
@@ -328,6 +328,15 @@ void Game::LoadAssetsAndCreateEntities()
 	iblTestSphere6->GetTransform()->SetPosition(2, .5f, 0);
 	iblTestSphere6->GetTransform()->SetScale(.5f, .5f, .5f);
 
+	for (int i = 0; i < 100; i++)
+	{
+		std::shared_ptr<GameEntity> newSphere = std::make_shared<GameEntity>(instance.GetMesh("sphere"), bronzeMatPBR);
+		newSphere->GetTransform()->SetPosition(RandomRange(-10.0f, 10.0f), RandomRange(-5.0f, 5.0f), RandomRange(-10.0f, 10.0f));
+		newSphere->GetTransform()->SetScale(RandomRange(0.5f, 1.5f), RandomRange(0.5f, 1.5f), RandomRange(0.5f, 1.5f));
+
+		entities.push_back(newSphere);
+	}
+
 	entities.push_back(iblTestSphere1);
 	entities.push_back(iblTestSphere2);
 	entities.push_back(iblTestSphere3);
@@ -400,9 +409,6 @@ void Game::GenerateLights()
 	spotLight.Range = 10.0f;
 	std::shared_ptr<Light> spot = std::make_shared<Light>(LIGHT_TYPE_SPOT, spotLight);// Setup Spot light
 
-	lights.push_back(dir1);
-	lights.push_back(dir2);
-	lights.push_back(dir3);
 	lights.push_back(spot);
 	
 	// Create the rest of the lights
@@ -421,6 +427,9 @@ void Game::GenerateLights()
 		lights.push_back(point);
 	}
 
+	lights.push_back(dir1);
+	lights.push_back(dir2);
+	lights.push_back(dir3);
 }
 
 

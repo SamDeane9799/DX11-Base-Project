@@ -47,6 +47,8 @@ private:
 	void DrawPointLights(std::shared_ptr<Camera> camera);
 
 	void SortLights();
+	void Merge(std::vector<std::shared_ptr<Light>>& lightArray, const int begin, const int mid, const int end);
+	void MergeSort(std::vector<std::shared_ptr<Light>>& lightArray,const int begin, const int end);
 
 	void DrawUI(std::vector<std::shared_ptr<Material>> materials, float deltaTime);
 
